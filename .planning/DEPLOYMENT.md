@@ -64,7 +64,7 @@ Referência local: `.env.example`
 
 ### Produção vs Preview
 
-Defina as mesmas variáveis para **Production** e, se usar previews, para **Preview** também.
+Defina as mesmas variáveis para **Production** e **Preview** (deploys de branch usam Preview).
 
 ---
 
