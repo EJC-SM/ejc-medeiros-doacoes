@@ -1,0 +1,18 @@
+<section class="card coord-panel-root" aria-labelledby="titulo-painel-coordenador">
+  <h2 id="titulo-painel-coordenador">Painel do Coordenador</h2>
+  <div id="coord-login-host"></div>
+
+  <div id="coord-panel-host" hidden>
+    <div id="coord-toolbar-host"></div>
+
+    <nav class="coord-subtabs" role="tablist" aria-label="Areas do coordenador">
+      <button type="button" class="coord-subtab is-active" data-coord-sub="doacoes" role="tab" aria-selected="true">Doacoes</button>
+      <button type="button" class="coord-subtab" data-coord-sub="banco" role="tab" aria-selected="false">Banco de Dados</button>
+      <button type="button" class="coord-subtab" data-coord-sub="dirigente" role="tab" aria-selected="false">Dirigente</button>
+    </nav>
+
+    <div id="coord-sub-doacoes" class="coord-subpanel is-active" role="tabpanel"></div>
+    <div id="coord-sub-banco" class="coord-subpanel" role="tabpanel" hidden></div>
+    <div id="coord-sub-dirigente" class="coord-subpanel" role="tabpanel" hidden></div>
+  </div>
+</section>
