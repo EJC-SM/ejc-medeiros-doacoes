@@ -29,6 +29,8 @@ async function fetchRuntimeConfig(): Promise<FirebaseRuntimeConfig | null> {
 }
 
 function getLocalViteConfig(): FirebaseRuntimeConfig | null {
+  // Fallback local: so quando /api/runtime-config nao estiver disponivel.
+  // Em dev/prod normal, o frontend usa FIREBASE_* servidos pelo backend — nao duplique no .env.
   const env = import.meta.env;
 
   const firebase: FirebaseRuntimeConfig = {
