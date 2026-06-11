@@ -37,6 +37,14 @@ async function dbSet(path, value) {
   return await resp.json();
 }
 
+async function dbDelete(path) {
+  const resp = await fetch(buildDbUrl(path), { method: 'DELETE' });
+  if (!resp.ok) {
+    throw new Error(`firebase DELETE failed: ${resp.status}`);
+  }
+  return null;
+}
+
 function getClientFirebaseConfig(env = process.env) {
   const firebase = {
     apiKey: env.FIREBASE_API_KEY || '',
@@ -56,5 +64,6 @@ module.exports = {
   hasFirebaseConfig,
   dbGet,
   dbSet,
+  dbDelete,
   getClientFirebaseConfig,
 };

@@ -1,6 +1,7 @@
 import { changePasswordApi, fetchAuthSetupStatus } from '../../../state/api';
 import type { AuthRole } from '../../../state/types';
 import { getEmbeddedDirigenteAuthHeaders } from '../../../utils/auth';
+import { setButtonContent } from '../../../utils/icons';
 import { fetchAuthChallenge, hashForStorage, validatePasswordPolicy } from '../../../utils/password-auth';
 
 function formatUpdatedAt(value: string | null): string {
@@ -50,7 +51,8 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
 
   const save = document.createElement('button');
   save.type = 'button';
-  save.textContent = 'Salvar nova senha';
+  save.className = 'btn btn--filled';
+  setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
 
   save.addEventListener('click', () => {
     void (async () => {
@@ -70,14 +72,14 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
       }
 
       save.disabled = true;
-      save.textContent = 'Gerando hash...';
+      setButtonContent(save, { icon: 'hourglass_top', label: 'Gerando hash...' });
 
       const challenge = await fetchAuthChallenge(role);
       if (!challenge?.salt) {
         error.textContent = 'Nao foi possivel preparar a troca de senha.';
         error.hidden = false;
         save.disabled = false;
-        save.textContent = 'Salvar nova senha';
+        setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
         return;
       }
 
@@ -86,13 +88,13 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
         error.textContent = 'Senha invalida.';
         error.hidden = false;
         save.disabled = false;
-        save.textContent = 'Salvar nova senha';
+        setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
         return;
       }
 
       const ok = await changePasswordApi(role, passwordHash, getEmbeddedDirigenteAuthHeaders());
       save.disabled = false;
-      save.textContent = 'Salvar nova senha';
+      setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
 
       if (!ok) {
         error.textContent = 'Nao foi possivel alterar a senha.';

@@ -1,4 +1,5 @@
 import type { AuthRole } from '../state/types';
+import { setButtonContent } from '../utils/icons';
 
 interface LoginGateOptions {
   role: AuthRole;
@@ -41,13 +42,13 @@ export function renderLoginGate(options: LoginGateOptions): HTMLElement {
 
   const submit = document.createElement('button');
   submit.type = 'button';
-  submit.textContent = 'Entrar';
+  submit.className = 'btn btn--filled btn--block';
+  setButtonContent(submit, { icon: 'login', label: 'Entrar' });
 
   const attempt = async (): Promise<void> => {
     error.hidden = true;
     submit.disabled = true;
-    const previousLabel = submit.textContent;
-    submit.textContent = 'Autenticando...';
+    setButtonContent(submit, { icon: 'hourglass_top', label: 'Autenticando...' });
     const login =
       options.loginFn ??
       (async (password: string) => {
@@ -56,7 +57,7 @@ export function renderLoginGate(options: LoginGateOptions): HTMLElement {
       });
     const result = await login(input.value);
     submit.disabled = false;
-    submit.textContent = previousLabel || 'Entrar';
+    setButtonContent(submit, { icon: 'login', label: 'Entrar' });
     if (!result.ok) {
       error.textContent = result.message || 'Credenciais invalidas.';
       error.hidden = false;
@@ -94,7 +95,8 @@ export function renderLogoutBar(role: AuthRole, onLogout: () => void): HTMLEleme
 
   const btn = document.createElement('button');
   btn.type = 'button';
-  btn.textContent = 'Sair';
+  btn.className = 'btn btn--outline btn--sm';
+  setButtonContent(btn, { icon: 'logout', label: 'Sair' });
   btn.addEventListener('click', () => {
     void import('../utils/auth').then(({ logout }) => {
       logout(role);

@@ -1,5 +1,6 @@
 import './styles/variables.css';
 import './styles/a11y.css';
+import './styles/buttons.css';
 import './styles/global.css';
 import { mountInitialSetup } from './components/auth-setup/initial-setup';
 import { refreshFormDoacao, renderFormDoacao } from './components/form-doacao/form-doacao';
@@ -14,6 +15,7 @@ import {
   renderPainelCoordenador,
 } from './components/painel-coordenador/painel-coordenador';
 import { fetchAuthSetupStatus, hydrateAllFromApi } from './state/api';
+import { setButtonContent } from './utils/icons';
 import './components/auth-setup/initial-setup.css';
 import { initFirebaseGateway } from './state/firebase';
 import { initWebVitals } from './utils/web-vitals';
@@ -25,6 +27,11 @@ const PANEL_ID_BY_VIEW: Record<ViewKey, string> = {
   coordenador: 'panel-coordenador',
 };
 
+const VIEW_TAB_ICONS: Record<ViewKey, string> = {
+  publico: 'volunteer_activism',
+  coordenador: 'admin_panel_settings',
+};
+
 function buildViewTab(view: ViewKey, label: string): HTMLButtonElement {
   const btn = document.createElement('button');
   btn.type = 'button';
@@ -33,7 +40,7 @@ function buildViewTab(view: ViewKey, label: string): HTMLButtonElement {
   btn.setAttribute('role', 'tab');
   btn.setAttribute('aria-selected', 'false');
   btn.setAttribute('aria-controls', PANEL_ID_BY_VIEW[view]);
-  btn.textContent = label;
+  setButtonContent(btn, { icon: VIEW_TAB_ICONS[view], label });
   return btn;
 }
 

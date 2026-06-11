@@ -6,9 +6,18 @@
     <div id="coord-toolbar-host"></div>
 
     <nav class="coord-subtabs" role="tablist" aria-label="Areas do coordenador">
-      <button type="button" class="coord-subtab is-active" data-coord-sub="doacoes" role="tab" aria-selected="true">Doacoes</button>
-      <button type="button" class="coord-subtab" data-coord-sub="banco" role="tab" aria-selected="false">Banco de Dados</button>
-      <button type="button" class="coord-subtab" data-coord-sub="dirigente" role="tab" aria-selected="false">Dirigente</button>
+      <button type="button" class="coord-subtab btn btn--outline is-active" data-coord-sub="doacoes" role="tab" aria-selected="true">
+        <span class="icon material-symbols-outlined" aria-hidden="true">inventory_2</span>
+        Doacoes
+      </button>
+      <button type="button" class="coord-subtab btn btn--outline" data-coord-sub="banco" role="tab" aria-selected="false">
+        <span class="icon material-symbols-outlined" aria-hidden="true">database</span>
+        Banco de Dados
+      </button>
+      <button type="button" class="coord-subtab btn btn--outline" data-coord-sub="dirigente" role="tab" aria-selected="false">
+        <span class="icon material-symbols-outlined" aria-hidden="true">shield_person</span>
+        Dirigente
+      </button>
     </nav>
 
     <div id="coord-sub-doacoes" class="coord-subpanel is-active" role="tabpanel"></div>

@@ -262,7 +262,7 @@ function createDevApiMiddleware() {
         const role = sanitizeText(url.query?.role, 20);
         if (!password.validateRole(role)) return json(res, 400, { error: 'invalid_role' });
         const params = await password.getPublicAuthParams(role);
-        const nonce = password.issueChallenge(role);
+        const nonce = await password.issueChallenge(role);
         return json(res, 200, {
           nonce,
           salt: params.salt,
@@ -300,7 +300,7 @@ function createDevApiMiddleware() {
         if (!proof || !nonce) return json(res, 400, { error: 'proof_required' });
         const status = await password.getAuthStatus();
         if (!status.initialSetupComplete) return json(res, 503, { error: 'setup_required' });
-        if (!password.consumeChallenge(nonce, role)) {
+        if (!(await password.consumeChallenge(nonce, role))) {
           return json(res, 401, { error: 'Credenciais inválidas.' });
         }
         const storedHash = await password.getStoredPasswordHash(role);

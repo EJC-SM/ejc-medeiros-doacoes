@@ -36,7 +36,7 @@ module.exports = async function handler(req, res) {
       return res.status(503).json({ error: 'setup_required' });
     }
 
-    if (!consumeChallenge(nonce, role)) {
+    if (!(await consumeChallenge(nonce, role))) {
       return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 

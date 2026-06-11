@@ -26,6 +26,9 @@ main {
 }
 
 .view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   border: 0;
   border-bottom: 2px solid transparent;
   border-radius: 0;
@@ -63,14 +66,8 @@ h4 {
   letter-spacing: 0.1px;
 }
 
-button {
-  transition: transform 120ms ease, filter 120ms ease;
-}
-
-button:hover {
-  filter: brightness(0.98);
-}
-
-button:active {
-  transform: translateY(1px);
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea {
+  transition: border-color 120ms ease, box-shadow 120ms ease;
 }

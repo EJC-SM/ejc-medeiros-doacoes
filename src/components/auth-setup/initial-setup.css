@@ -48,14 +48,6 @@
 
 #setup-submit {
   margin-top: 0.75rem;
-  width: 100%;
-  border: 1px solid var(--brand);
-  border-radius: 8px;
-  padding: 0.65rem;
-  background: var(--brand);
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
 }
 
 #setup-submit:disabled {

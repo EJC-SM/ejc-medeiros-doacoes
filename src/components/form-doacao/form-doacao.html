@@ -22,7 +22,10 @@
 
     <input type="hidden" id="csrf" name="csrf" />
 
-    <button id="btn-submit" type="submit">Confirmar doacao</button>
+    <button id="btn-submit" type="submit" class="btn btn--filled btn--block">
+      <span class="icon material-symbols-outlined" aria-hidden="true">check_circle</span>
+      Confirmar doacao
+    </button>
     <p id="form-feedback" role="status" aria-live="polite"></p>
   </form>
 </section>
@@ -42,7 +45,10 @@
   </div>
   <p class="pix-label">Chave Pix</p>
   <p id="pix-chave-display" class="pix-chave"></p>
-  <button id="btn-copiar-pix" type="button">Copiar chave Pix</button>
+  <button id="btn-copiar-pix" type="button" class="btn btn--outline">
+    <span class="icon material-symbols-outlined" aria-hidden="true">content_copy</span>
+    Copiar chave Pix
+  </button>
   <p id="pix-copiado" class="feedback-ok" role="status" aria-live="polite" hidden>Chave copiada!</p>
 </section>
 

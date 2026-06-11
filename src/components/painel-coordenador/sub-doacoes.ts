@@ -1,3 +1,4 @@
+import { setButtonContent } from '../../utils/icons';
 import '../../styles/equipe-chart.css';
 import { updateConfigApi, updateEntregaApi } from '../../state/api';
 import { isFirebaseReady, syncDoacoesEtapa } from '../../state/firebase';
@@ -65,14 +66,20 @@ function buildDoacaoCard(doacao: Doacao): HTMLElement {
   if (doacao.entregue) {
     const btn = document.createElement('button');
     btn.type = 'button';
+    btn.className = 'btn btn--danger-outline btn--sm';
     btn.setAttribute('data-delivery-remove', String(doacao.id));
-    btn.textContent = 'Remover entrega';
+    setButtonContent(btn, { icon: 'undo', label: 'Remover entrega' });
     actions.appendChild(btn);
   } else {
     const btn = document.createElement('button');
     btn.type = 'button';
+    btn.className = 'btn btn--outline btn--sm';
     btn.setAttribute('data-delivery-toggle', String(doacao.id));
-    btn.textContent = entregaPendenteId === doacao.id ? 'Ocultar entrega' : 'Marcar entregue';
+    const isOpen = entregaPendenteId === doacao.id;
+    setButtonContent(btn, {
+      icon: isOpen ? 'expand_less' : 'local_shipping',
+      label: isOpen ? 'Ocultar entrega' : 'Marcar entregue',
+    });
     actions.appendChild(btn);
   }
 
@@ -98,13 +105,15 @@ function buildDoacaoCard(doacao: Doacao): HTMLElement {
 
     const saveBtn = document.createElement('button');
     saveBtn.type = 'button';
+    saveBtn.className = 'btn btn--filled btn--sm';
     saveBtn.setAttribute('data-delivery-save', String(doacao.id));
-    saveBtn.textContent = 'Salvar entrega';
+    setButtonContent(saveBtn, { icon: 'check', label: 'Salvar entrega' });
 
     const cancelBtn = document.createElement('button');
     cancelBtn.type = 'button';
+    cancelBtn.className = 'btn btn--outline btn--sm';
     cancelBtn.setAttribute('data-delivery-cancel', String(doacao.id));
-    cancelBtn.textContent = 'Cancelar';
+    setButtonContent(cancelBtn, { icon: 'close', label: 'Cancelar' });
 
     entregaWrap.appendChild(dataInput);
     entregaWrap.appendChild(ocasiaoInput);
@@ -377,8 +386,14 @@ export function renderSubDoacoes(): HTMLElement {
       <div id="coord-grafico-legenda" class="equipe-chart-legend"></div>
     </div>
     <div class="coord-export-actions">
-      <button id="coord-export-etapa" type="button">Exportar dados desta etapa</button>
-      <button id="coord-export-backup" type="button">Backup completo (todas as etapas)</button>
+      <button id="coord-export-etapa" type="button" class="btn btn--outline">
+        <span class="icon material-symbols-outlined" aria-hidden="true">download</span>
+        Exportar dados desta etapa
+      </button>
+      <button id="coord-export-backup" type="button" class="btn btn--outline">
+        <span class="icon material-symbols-outlined" aria-hidden="true">backup</span>
+        Backup completo (todas as etapas)
+      </button>
     </div>
     <section class="coord-recado-section">
       <h3>Recado para o publico</h3>
@@ -386,8 +401,14 @@ export function renderSubDoacoes(): HTMLElement {
       <label class="sr-only" for="coord-recado">Recado publico</label>
       <textarea id="coord-recado" rows="5" maxlength="400" placeholder="Ex: Precisamos muito de arroz e feijao!"></textarea>
       <div class="coord-export-actions">
-        <button id="coord-salvar-recado" type="button">Publicar recado</button>
-        <button id="coord-limpar-recado" type="button">Remover recado</button>
+        <button id="coord-salvar-recado" type="button" class="btn btn--filled">
+          <span class="icon material-symbols-outlined" aria-hidden="true">campaign</span>
+          Publicar recado
+        </button>
+        <button id="coord-limpar-recado" type="button" class="btn btn--outline">
+          <span class="icon material-symbols-outlined" aria-hidden="true">delete</span>
+          Remover recado
+        </button>
       </div>
       <p id="coord-recado-feedback" class="coord-recado-feedback" role="status" aria-live="polite"></p>
     </section>

@@ -9,6 +9,7 @@ import {
 } from '../../state/store';
 import type { CategoriaCatalogo, ItemCatalogo } from '../../state/types';
 import { getBancoAuthHeaders, isBancoDesbloqueado, unlockBanco } from '../../utils/auth';
+import { setButtonContent } from '../../utils/icons';
 import { sanitizeText } from '../../utils/security';
 import { refreshFormDoacao } from '../form-doacao/form-doacao';
 
@@ -73,9 +74,12 @@ function buildItemRow(
 
   const visBtn = document.createElement('button');
   visBtn.type = 'button';
-  visBtn.className = item.visivel !== false ? 'db-btn-vis' : 'db-btn-hidden';
+  visBtn.className = `btn btn--sm ${item.visivel !== false ? 'btn--outline' : 'btn--text'}`;
   visBtn.title = item.visivel !== false ? 'Ocultar' : 'Mostrar';
-  visBtn.textContent = item.visivel !== false ? 'Visivel' : 'Oculto';
+  setButtonContent(visBtn, {
+    icon: item.visivel !== false ? 'visibility' : 'visibility_off',
+    label: item.visivel !== false ? 'Visivel' : 'Oculto',
+  });
   visBtn.onclick = () => {
     const itens = getItensCatalogoRaw();
     itens[idx].visivel = itens[idx].visivel === false;
@@ -84,13 +88,14 @@ function buildItemRow(
 
   const editBtn = document.createElement('button');
   editBtn.type = 'button';
-  editBtn.textContent = 'Editar';
+  editBtn.className = 'btn btn--outline btn--sm';
+  setButtonContent(editBtn, { icon: 'edit', label: 'Editar' });
   editBtn.onclick = () => openEditModal(root, idx);
 
   const removeBtn = document.createElement('button');
   removeBtn.type = 'button';
-  removeBtn.className = 'db-btn-danger';
-  removeBtn.textContent = 'Remover';
+  removeBtn.className = 'btn btn--danger-outline btn--sm';
+  setButtonContent(removeBtn, { icon: 'delete', label: 'Remover' });
   removeBtn.onclick = () => {
     const itens = getItensCatalogoRaw();
     if (!window.confirm(`Remover "${itens[idx].nome}" da lista?`)) return;
@@ -144,8 +149,8 @@ function renderCatList(root: HTMLElement): void {
     actions.className = 'db-actions';
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
-    removeBtn.className = 'db-btn-danger';
-    removeBtn.textContent = 'Remover';
+    removeBtn.className = 'btn btn--danger-outline btn--sm';
+    setButtonContent(removeBtn, { icon: 'delete', label: 'Remover' });
     removeBtn.onclick = () => {
       if (!window.confirm('Remover esta categoria?')) return;
       const next = getCategorias().filter((c) => c.id !== cat.id);
@@ -234,8 +239,14 @@ function openUnlockModal(root: HTMLElement): void {
     <input id="db-unlock-pass" type="password" maxlength="80" autocomplete="current-password" />
     <p id="db-unlock-error" class="login-error" hidden></p>
     <div class="coord-export-actions">
-      <button type="button" id="db-unlock-submit">Desbloquear</button>
-      <button type="button" id="db-unlock-cancel">Cancelar</button>
+      <button type="button" id="db-unlock-submit" class="btn btn--filled">
+        <span class="icon material-symbols-outlined" aria-hidden="true">lock_open</span>
+        Desbloquear
+      </button>
+      <button type="button" id="db-unlock-cancel" class="btn btn--outline">
+        <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
+        Cancelar
+      </button>
     </div>
   `;
 
@@ -278,8 +289,14 @@ function openAddCatModal(root: HTMLElement): void {
     <input id="cat-nome" type="text" maxlength="80" placeholder="Ex: Enlatados" />
     <p id="cat-error" class="login-error" hidden>Preencha o nome.</p>
     <div class="coord-export-actions">
-      <button type="button" id="cat-save">Salvar</button>
-      <button type="button" id="cat-cancel">Cancelar</button>
+      <button type="button" id="cat-save" class="btn btn--filled">
+        <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
+        Salvar
+      </button>
+      <button type="button" id="cat-cancel" class="btn btn--outline">
+        <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
+        Cancelar
+      </button>
     </div>
   `;
 
@@ -327,8 +344,14 @@ function openEditModal(root: HTMLElement, idx: number): void {
     <select id="edit-item-cat"></select>
     <p id="edit-error" class="login-error" hidden>Preencha o nome.</p>
     <div class="coord-export-actions">
-      <button type="button" id="edit-save">Salvar</button>
-      <button type="button" id="edit-cancel">Cancelar</button>
+      <button type="button" id="edit-save" class="btn btn--filled">
+        <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
+        Salvar
+      </button>
+      <button type="button" id="edit-cancel" class="btn btn--outline">
+        <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
+        Cancelar
+      </button>
     </div>
   `;
 
@@ -408,7 +431,10 @@ export function renderSubBanco(): HTMLElement {
       <h3>Itens de doacao <span id="db-count" class="db-count"></span></h3>
       <div id="db-locked-info" class="db-locked-msg">
         <p>Acesso ao banco de dados requer senha do Dirigente.</p>
-        <button id="db-unlock-btn" type="button">Desbloquear</button>
+        <button id="db-unlock-btn" type="button" class="btn btn--filled">
+          <span class="icon material-symbols-outlined" aria-hidden="true">lock_open</span>
+          Desbloquear
+        </button>
       </div>
       <div id="db-conteudo" hidden>
         <div id="db-lista" class="db-lista"></div>
@@ -431,11 +457,17 @@ export function renderSubBanco(): HTMLElement {
             <label for="db-novo-cat">Categoria</label>
             <select id="db-novo-cat"></select>
           </div>
-          <button id="db-add-item" type="button" class="db-add-btn">Adicionar item</button>
+          <button id="db-add-item" type="button" class="db-add-btn btn btn--filled">
+            <span class="icon material-symbols-outlined" aria-hidden="true">add</span>
+            Adicionar item
+          </button>
         </div>
         <div class="db-cats-header">
           <h4>Categorias</h4>
-          <button id="db-add-cat" type="button">Nova categoria</button>
+          <button id="db-add-cat" type="button" class="btn btn--outline btn--sm">
+            <span class="icon material-symbols-outlined" aria-hidden="true">create_new_folder</span>
+            Nova categoria
+          </button>
         </div>
         <div id="db-cats-lista" class="db-cats-lista"></div>
       </div>

@@ -1,4 +1,5 @@
 const crypto = require('node:crypto');
+const { dbGet, dbSet, dbDelete, hasFirebaseConfig } = require('./firebase-rest.cjs');
 const { getAuthState, saveAuthState, getConfigState, saveConfigState } = require('./auth-store');
 
 const AUTH_ALGO = 'pbkdf2-sha256';
@@ -71,20 +72,43 @@ async function getPublicAuthParams(role) {
   };
 }
 
-function issueChallenge(role) {
+function challengePath(nonce) {
+  return `auth/challenges/${nonce}`;
+}
+
+async function saveChallenge(nonce, entry) {
+  if (hasFirebaseConfig()) {
+    await dbSet(challengePath(nonce), entry);
+    return;
+  }
+  NONCE_BUCKET.set(nonce, entry);
+}
+
+async function takeChallenge(nonce) {
+  const key = String(nonce || '');
+  if (!key) return null;
+
+  if (hasFirebaseConfig()) {
+    const entry = await dbGet(challengePath(key));
+    if (entry) await dbDelete(challengePath(key));
+    return entry;
+  }
+
+  const entry = NONCE_BUCKET.get(key) || null;
+  if (entry) NONCE_BUCKET.delete(key);
+  return entry;
+}
+
+async function issueChallenge(role) {
   const nonce = crypto.randomBytes(16).toString('base64url');
-  NONCE_BUCKET.set(nonce, { role, expiresAt: Date.now() + NONCE_TTL_MS, used: false });
+  await saveChallenge(nonce, { role, expiresAt: Date.now() + NONCE_TTL_MS, used: false });
   return nonce;
 }
 
-function consumeChallenge(nonce, role) {
-  const entry = NONCE_BUCKET.get(String(nonce || ''));
+async function consumeChallenge(nonce, role) {
+  const entry = await takeChallenge(nonce);
   if (!entry || entry.used || entry.role !== role) return false;
-  if (entry.expiresAt < Date.now()) {
-    NONCE_BUCKET.delete(String(nonce));
-    return false;
-  }
-  entry.used = true;
+  if (entry.expiresAt < Date.now()) return false;
   return true;
 }
 

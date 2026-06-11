@@ -1,0 +1,137 @@
+.icon {
+  font-size: 1.15em;
+  line-height: 1;
+  vertical-align: middle;
+  user-select: none;
+}
+
+.material-symbols-outlined,
+.material-symbols-rounded,
+.material-symbols-filled {
+  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.material-symbols-filled {
+  font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease, filter
+    120ms ease;
+}
+
+.btn:hover {
+  filter: brightness(0.97);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--filled {
+  background: var(--brand);
+  color: #ffffff;
+  border-color: var(--brand);
+}
+
+.btn--filled:hover {
+  background: var(--brand-strong);
+  border-color: var(--brand-strong);
+}
+
+.btn--outline {
+  background: transparent;
+  color: var(--brand-strong);
+  border-color: var(--brand);
+}
+
+.btn--outline:hover {
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.btn--text {
+  background: transparent;
+  color: var(--muted);
+  border-color: transparent;
+  padding-inline: 0.65rem;
+}
+
+.btn--text:hover {
+  background: rgba(15, 23, 42, 0.05);
+  color: var(--text);
+}
+
+.btn--danger-filled {
+  background: var(--danger);
+  color: #ffffff;
+  border-color: var(--danger);
+}
+
+.btn--danger-filled:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+}
+
+.btn--danger-outline {
+  background: transparent;
+  color: var(--danger);
+  border-color: #fecaca;
+}
+
+.btn--danger-outline:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+}
+
+.btn--sm {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.82rem;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--icon-only {
+  padding: 0.45rem;
+  aspect-ratio: 1;
+}
+
+.btn--icon-only .icon {
+  font-size: 1.25em;
+}
+
+.summary-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.summary-with-icon .icon {
+  font-size: 1.2em;
+  color: var(--brand);
+}

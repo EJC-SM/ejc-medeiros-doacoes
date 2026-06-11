@@ -24,7 +24,7 @@ module.exports = async function handler(req, res) {
       return res.status(400).json({ error: 'invalid_role' });
     }
 
-    const nonce = issueChallenge(role);
+    const nonce = await issueChallenge(role);
     const expiresAt = new Date(Date.now() + 60_000).toISOString();
 
     return res.status(200).json({

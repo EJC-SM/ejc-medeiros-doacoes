@@ -1,3 +1,4 @@
+import { setButtonContent } from '../../utils/icons';
 import template from './painel-dirigente.html?raw';
 import './painel-dirigente.css';
 import { lockEtapaApi, resetDoacoesApi, resetItensApi, updateConfigApi } from '../../state/api';
@@ -114,9 +115,10 @@ function renderEquipesForEtapa(root: HTMLElement, etapa: Etapa): void {
     label.textContent = eq;
     const removeBtn = document.createElement('button');
     removeBtn.type = 'button';
+    removeBtn.className = 'btn btn--danger-outline btn--sm';
     removeBtn.setAttribute('data-equipe-remove', String(etapa));
     removeBtn.setAttribute('data-equipe-idx', String(idx));
-    removeBtn.textContent = 'Remover';
+    setButtonContent(removeBtn, { icon: 'delete', label: 'Remover' });
     row.appendChild(label);
     row.appendChild(removeBtn);
     lista.appendChild(row);
@@ -167,8 +169,24 @@ function renderLockButtons(root: HTMLElement): void {
   const locked = getEtapaLocked();
   const b1 = root.querySelector<HTMLButtonElement>('#dir-trava-1');
   const b2 = root.querySelector<HTMLButtonElement>('#dir-trava-2');
-  if (b1) b1.textContent = locked === 1 ? '1a Etapa (travada)' : 'Travar 1a Etapa';
-  if (b2) b2.textContent = locked === 2 ? '2a Etapa (travada)' : 'Travar 2a Etapa';
+  if (b1) {
+    setButtonContent(b1, {
+      icon: locked === 1 ? 'lock' : 'lock',
+      label: locked === 1 ? '1a Etapa (travada)' : 'Travar 1a Etapa',
+      iconVariant: locked === 1 ? 'filled' : 'outlined',
+    });
+    b1.classList.toggle('btn--filled', locked === 1);
+    b1.classList.toggle('btn--outline', locked !== 1);
+  }
+  if (b2) {
+    setButtonContent(b2, {
+      icon: 'lock',
+      label: locked === 2 ? '2a Etapa (travada)' : 'Travar 2a Etapa',
+      iconVariant: locked === 2 ? 'filled' : 'outlined',
+    });
+    b2.classList.toggle('btn--filled', locked === 2);
+    b2.classList.toggle('btn--outline', locked !== 2);
+  }
 }
 
 function bindDropzone(

@@ -42,19 +42,31 @@
 }
 
 .etapa-btn {
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 255, 255, 0.45);
   background: transparent;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   border-radius: 999px;
-  padding: 0.35rem 0.9rem;
-  font: inherit;
-  cursor: pointer;
+  padding: 0.4rem 0.95rem;
+}
+
+.etapa-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.65);
+  color: #ffffff;
 }
 
 .etapa-btn.is-active {
   background: #ffffff;
   color: var(--brand-strong);
   border-color: #ffffff;
+}
+
+.etapa-btn.is-active .icon {
+  color: var(--brand-strong);
+}
+
+.etapa-btn.btn--outline:focus-visible {
+  outline-color: #ffffff;
 }
 
 .etapa-btn:disabled {

@@ -25,7 +25,7 @@ legend {
 
 input,
 select,
-button {
+textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.6rem 0.7rem;
@@ -35,7 +35,7 @@ button {
 
 input:focus,
 select:focus,
-button:focus {
+textarea:focus {
   outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
@@ -64,13 +64,6 @@ button:focus {
 
 .item-row:not(.item-row-selected) input[type="number"] {
   display: none;
-}
-
-#btn-submit {
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-  cursor: pointer;
 }
 
 #btn-submit:disabled {
@@ -168,13 +161,6 @@ button:focus {
   font-weight: 700;
   margin: 0 0 0.75rem;
   word-break: break-word;
-}
-
-#btn-copiar-pix {
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-  cursor: pointer;
 }
 
 .public-totais {

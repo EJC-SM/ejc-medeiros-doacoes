@@ -65,7 +65,7 @@
 }
 
 .dir-drop-icon {
-  font-weight: 700;
+  font-size: 2rem;
   color: var(--brand);
 }
 
@@ -147,29 +147,14 @@
 }
 
 .dir-inline-form input,
-.dir-inline-form button,
 textarea,
-.dir-actions button,
-.dir-item button {
+.dir-section input[type="text"],
+.dir-section input[type="file"],
+.dir-section textarea {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.5rem 0.6rem;
   font: inherit;
-}
-
-.dir-inline-form button,
-.dir-actions button {
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-  cursor: pointer;
-}
-
-.dir-item button {
-  background: #fef2f2;
-  color: var(--danger);
-  border-color: #fecaca;
-  cursor: pointer;
 }
 
 .dir-actions {
@@ -177,6 +162,12 @@ textarea,
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.45rem;
+}
+
+.dir-danger-zone .dir-accordion-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .dir-section {
@@ -203,15 +194,9 @@ textarea,
   width: 140px;
   height: 140px;
   object-fit: contain;
-  margin: 0.5rem 0;
+  margin: 0.5rem auto;
   border: 1px solid var(--line);
   border-radius: 8px;
-}
-
-.dir-danger-zone button {
-  background: #fef2f2;
-  color: var(--danger);
-  border-color: #fecaca;
 }
 
 .modal-overlay {

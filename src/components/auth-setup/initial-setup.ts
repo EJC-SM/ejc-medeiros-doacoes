@@ -1,5 +1,6 @@
 import type { AuthSetupStatus } from '../../state/api';
 import { initialSetupApi } from '../../state/api';
+import { setButtonContent } from '../../utils/icons';
 import { hashForStorage, validatePasswordPolicy } from '../../utils/password-auth';
 
 function setMessage(el: HTMLElement, text: string, ok: boolean): void {
@@ -41,7 +42,10 @@ export function mountInitialSetup(
       <input id="setup-dir-confirm" type="password" autocomplete="new-password" maxlength="80" />
     </fieldset>
     <p id="setup-feedback" role="status" aria-live="polite"></p>
-    <button id="setup-submit" type="button">Concluir setup inicial</button>
+    <button id="setup-submit" type="button" class="btn btn--filled btn--block">
+      <span class="icon material-symbols-outlined" aria-hidden="true">done_all</span>
+      Concluir setup inicial
+    </button>
   `;
 
   container.appendChild(card);
@@ -89,7 +93,7 @@ export function mountInitialSetup(
       }
 
       submit.disabled = true;
-      submit.textContent = 'Gerando hashes...';
+      setButtonContent(submit, { icon: 'hourglass_top', label: 'Gerando hashes...' });
 
       const [coordHash, dirHash] = await Promise.all([
         hashForStorage(coordPass, salts.coord, status.iterations),
@@ -99,13 +103,13 @@ export function mountInitialSetup(
       if (!coordHash || !dirHash) {
         setMessage(feedback, 'Nao foi possivel gerar os hashes.', false);
         submit.disabled = false;
-        submit.textContent = 'Concluir setup inicial';
+        setButtonContent(submit, { icon: 'done_all', label: 'Concluir setup inicial' });
         return;
       }
 
       const result = await initialSetupApi(coordHash, dirHash, token);
       submit.disabled = false;
-      submit.textContent = 'Concluir setup inicial';
+      setButtonContent(submit, { icon: 'done_all', label: 'Concluir setup inicial' });
 
       if (!result.ok) {
         const msg =

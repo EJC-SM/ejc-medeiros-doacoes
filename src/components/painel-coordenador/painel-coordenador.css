@@ -75,21 +75,11 @@
   margin-top: 0.45rem;
 }
 
-.coord-actions button,
-.coord-entrega-form button,
 .coord-entrega-form input {
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.45rem 0.6rem;
   font: inherit;
-}
-
-.coord-actions button,
-.coord-entrega-form button {
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-  cursor: pointer;
 }
 
 .coord-entrega-form {
@@ -128,16 +118,10 @@
   margin-bottom: 0.75rem;
 }
 
-.coord-export-actions button,
-.panel-toolbar button {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.45rem 0.65rem;
-  font: inherit;
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-  cursor: pointer;
+.panel-toolbar span {
+  font-size: 0.88rem;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .login-gate {
@@ -163,21 +147,13 @@
   font-size: 0.88rem;
 }
 
-.login-card input,
-.login-card button {
+.login-card input {
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 8px;
   padding: 0.55rem 0.65rem;
   font: inherit;
   margin-top: 0.45rem;
-}
-
-.login-card button {
-  background: var(--brand);
-  color: #ffffff;
-  border-color: var(--brand);
-  cursor: pointer;
 }
 
 .login-error {
@@ -195,19 +171,17 @@
 .coord-subtab {
   flex: 1;
   min-width: 120px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.5rem 0.65rem;
-  font: inherit;
-  font-weight: 600;
-  background: #f8fafc;
-  cursor: pointer;
 }
 
 .coord-subtab.is-active {
   background: var(--brand);
   color: #fff;
   border-color: var(--brand);
+}
+
+.coord-subtab.is-active:hover {
+  background: var(--brand-strong);
+  border-color: var(--brand-strong);
 }
 
 .coord-subpanel {
@@ -302,23 +276,8 @@
 
 .db-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.35rem;
-}
-
-.db-actions button,
-.db-locked-msg button,
-.db-add-btn,
-.db-cats-header button {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.35rem 0.55rem;
-  font: inherit;
-  background: #fff;
-  cursor: pointer;
-}
-
-.db-btn-danger {
-  color: var(--danger);
 }
 
 .db-cat-heading {
@@ -354,9 +313,6 @@
 
 .db-add-btn {
   grid-column: 1 / -1;
-  background: var(--brand);
-  color: #fff;
-  border-color: var(--brand);
 }
 
 .db-cats-header {
