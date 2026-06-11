@@ -1,6 +1,7 @@
 import './styles/variables.css';
 import './styles/a11y.css';
 import './styles/buttons.css';
+import './styles/modal.css';
 import './styles/global.css';
 import { mountInitialSetup } from './components/auth-setup/initial-setup';
 import { refreshFormDoacao, renderFormDoacao } from './components/form-doacao/form-doacao';

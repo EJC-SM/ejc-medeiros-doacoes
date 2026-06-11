@@ -1,4 +1,5 @@
 import { setButtonContent } from '../../utils/icons';
+import { toastError, toastSuccess, toastWarning } from '../../utils/toast';
 import '../../styles/equipe-chart.css';
 import { updateConfigApi, updateEntregaApi } from '../../state/api';
 import { isFirebaseReady, syncDoacoesEtapa } from '../../state/firebase';
@@ -103,10 +104,17 @@ function buildDoacaoCard(doacao: Doacao): HTMLElement {
     ocasiaoInput.maxLength = 60;
     ocasiaoInput.placeholder = 'Ocasião (opcional)';
 
+    const fieldsWrap = document.createElement('div');
+    fieldsWrap.className = 'coord-entrega-fields';
+
+    const actionsWrap = document.createElement('div');
+    actionsWrap.className = 'btn-row';
+
     const saveBtn = document.createElement('button');
     saveBtn.type = 'button';
     saveBtn.className = 'btn btn--filled btn--sm';
     saveBtn.setAttribute('data-delivery-save', String(doacao.id));
+    saveBtn.disabled = true;
     setButtonContent(saveBtn, { icon: 'check', label: 'Salvar entrega' });
 
     const cancelBtn = document.createElement('button');
@@ -115,10 +123,16 @@ function buildDoacaoCard(doacao: Doacao): HTMLElement {
     cancelBtn.setAttribute('data-delivery-cancel', String(doacao.id));
     setButtonContent(cancelBtn, { icon: 'close', label: 'Cancelar' });
 
-    entregaWrap.appendChild(dataInput);
-    entregaWrap.appendChild(ocasiaoInput);
-    entregaWrap.appendChild(saveBtn);
-    entregaWrap.appendChild(cancelBtn);
+    dataInput.addEventListener('input', () => {
+      saveBtn.disabled = !dataInput.value;
+    });
+
+    fieldsWrap.appendChild(dataInput);
+    fieldsWrap.appendChild(ocasiaoInput);
+    actionsWrap.appendChild(cancelBtn);
+    actionsWrap.appendChild(saveBtn);
+    entregaWrap.appendChild(fieldsWrap);
+    entregaWrap.appendChild(actionsWrap);
     article.appendChild(entregaWrap);
   }
 
@@ -246,21 +260,20 @@ function mountFiltro(root: HTMLElement): void {
   filtro.onchange = () => renderPainel(root);
 }
 
-async function syncRecado(root: HTMLElement, texto: string): Promise<void> {
+async function syncRecado(root: HTMLElement, texto: string, salvarBtn?: HTMLButtonElement): Promise<void> {
+  if (salvarBtn) salvarBtn.disabled = true;
   const etapa = getEtapaPublica();
   const synced = await updateConfigApi({ etapa, recado: texto });
   if (synced) {
     setRecado(etapa, texto);
   }
   refreshFormDoacao();
-  const feedback = root.querySelector<HTMLElement>('#coord-recado-feedback');
-  if (feedback) {
-    if (synced) {
-      feedback.textContent = texto ? 'Recado publicado.' : 'Recado removido.';
-    } else {
-      feedback.textContent = 'Nao foi possivel salvar o recado. Verifique sua sessao e tente novamente.';
-    }
+  if (synced) {
+    toastSuccess(texto ? 'Recado publicado.' : 'Recado removido.');
+  } else {
+    toastError('Nao foi possivel salvar o recado. Verifique sua sessao e tente novamente.');
   }
+  if (salvarBtn) salvarBtn.disabled = false;
 }
 
 function mountRecadoActions(root: HTMLElement): void {
@@ -270,12 +283,12 @@ function mountRecadoActions(root: HTMLElement): void {
   if (!salvar || !limpar || !recado) return;
 
   salvar.onclick = () => {
-    void syncRecado(root, sanitizeText(recado.value));
+    void syncRecado(root, sanitizeText(recado.value), salvar);
   };
 
   limpar.onclick = () => {
     recado.value = '';
-    void syncRecado(root, '');
+    void syncRecado(root, '', limpar);
   };
 }
 
@@ -316,6 +329,7 @@ function mountEntregaActions(root: HTMLElement): void {
         await persistDoacoesLocal(doacoes);
       }
       renderPainel(root);
+      toastSuccess('Entrega removida.');
       return;
     }
 
@@ -343,6 +357,7 @@ function mountEntregaActions(root: HTMLElement): void {
     }
     entregaPendenteId = null;
     renderPainel(root);
+    toastSuccess('Entrega registrada.');
   });
 }
 
@@ -355,14 +370,16 @@ function mountExportActions(root: HTMLElement): void {
     const etapa = getEtapaPublica();
     const dados = getDoacoes(etapa);
     if (!dados.length) {
-      window.alert('Nenhuma doacao para exportar.');
+      toastWarning('Nenhuma doacao para exportar.');
       return;
     }
     exportEtapaCsv(etapa, dados);
+    toastSuccess('Exportacao iniciada.');
   };
 
   exportBackup.onclick = () => {
     exportBackupCsv({ 1: getDoacoes(1), 2: getDoacoes(2) }, getItensCatalogoRaw());
+    toastSuccess('Backup exportado.');
   };
 }
 
@@ -400,17 +417,16 @@ export function renderSubDoacoes(): HTMLElement {
       <p class="coord-recado-hint">O texto abaixo aparece na tela principal para todos os participantes.</p>
       <label class="sr-only" for="coord-recado">Recado publico</label>
       <textarea id="coord-recado" rows="5" maxlength="400" placeholder="Ex: Precisamos muito de arroz e feijao!"></textarea>
-      <div class="coord-export-actions">
-        <button id="coord-salvar-recado" type="button" class="btn btn--filled">
-          <span class="icon material-symbols-outlined" aria-hidden="true">campaign</span>
-          Publicar recado
-        </button>
+      <div class="btn-row">
         <button id="coord-limpar-recado" type="button" class="btn btn--outline">
           <span class="icon material-symbols-outlined" aria-hidden="true">delete</span>
           Remover recado
         </button>
+        <button id="coord-salvar-recado" type="button" class="btn btn--filled">
+          <span class="icon material-symbols-outlined" aria-hidden="true">campaign</span>
+          Publicar recado
+        </button>
       </div>
-      <p id="coord-recado-feedback" class="coord-recado-feedback" role="status" aria-live="polite"></p>
     </section>
   `;
 

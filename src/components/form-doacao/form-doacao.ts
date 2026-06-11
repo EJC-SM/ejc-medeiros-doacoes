@@ -23,16 +23,12 @@ import {
   isValidClientCsrfToken,
   sanitizeText,
 } from '../../utils/security';
+import { toastError, toastSuccess } from '../../utils/toast';
 import { validateEquipe, validateNome, validateQuantidade, validateTelefone } from '../../utils/validation';
 import { refreshPainelCoordenador } from '../painel-coordenador/painel-coordenador';
 
 type RefreshFormHandler = () => void;
 let refreshFormHandler: RefreshFormHandler | null = null;
-
-function setFeedback(el: HTMLElement, message: string, ok: boolean): void {
-  el.textContent = message;
-  el.className = ok ? 'feedback-ok' : 'feedback-error';
-}
 
 function selectedItens(root: HTMLElement): ItemDoacao[] {
   const etapa = getEtapaPublica();
@@ -71,24 +67,53 @@ function selectedItens(root: HTMLElement): ItemDoacao[] {
   return itens;
 }
 
+function isFormReadyToSubmit(form: HTMLFormElement): boolean {
+  const nome = sanitizeText(form.querySelector<HTMLInputElement>('#nome')?.value || '');
+  const equipe = form.querySelector<HTMLSelectElement>('#equipe')?.value || '';
+  const hasItem = Boolean(form.querySelector('[data-item-row] input[type="checkbox"]:checked'));
+  return nome.length >= 3 && Boolean(equipe) && hasItem;
+}
+
+function updateSubmitButtonState(root: HTMLElement): void {
+  const form = root.querySelector<HTMLFormElement>('#form-doacao');
+  const submit = root.querySelector<HTMLButtonElement>('#btn-submit');
+  if (!form || !submit || form.querySelector<HTMLInputElement>('#nome')?.disabled) return;
+  submit.disabled = !isFormReadyToSubmit(form);
+}
+
 function renderPublicSections(root: HTMLElement): void {
   const etapa = getEtapaPublica();
   const form = root.querySelector<HTMLFormElement>('#form-doacao');
   const submit = root.querySelector<HTMLButtonElement>('#btn-submit');
   const lockedMsg = root.querySelector<HTMLElement>('#form-locked-msg');
+  const pixBtn = root.querySelector<HTMLButtonElement>('#btn-copiar-pix');
+
+  const equipes = getEquipes(etapa);
+  const itens = getItensCatalogo();
+  const formBlocked = !equipes.length || !itens.length;
 
   if (lockedMsg) {
-    lockedMsg.hidden = true;
-    lockedMsg.textContent = '';
+    if (formBlocked) {
+      lockedMsg.hidden = false;
+      lockedMsg.textContent = !equipes.length
+        ? 'Nenhuma equipe cadastrada para esta etapa. Aguarde a configuracao do evento.'
+        : 'Nenhum item disponivel para doacao nesta etapa.';
+    } else {
+      lockedMsg.hidden = true;
+      lockedMsg.textContent = '';
+    }
   }
 
   if (form && submit) {
     form.querySelectorAll('input, select, button').forEach((el) => {
       if (el.id === 'btn-submit') return;
-      (el as HTMLInputElement).disabled = false;
+      (el as HTMLInputElement).disabled = formBlocked;
     });
-    submit.disabled = false;
+    submit.disabled = formBlocked || !isFormReadyToSubmit(form);
   }
+
+  const chave = getPixChave();
+  if (pixBtn) pixBtn.disabled = !chave.trim();
 
   const verseCard = root.querySelector<HTMLElement>('#verse-card');
   const versiculo = root.querySelector<HTMLElement>('#versiculo-texto');
@@ -102,7 +127,6 @@ function renderPublicSections(root: HTMLElement): void {
   const pixChave = root.querySelector<HTMLElement>('#pix-chave-display');
   const pixQr = root.querySelector<HTMLImageElement>('#pix-qr');
   const pixPlaceholder = root.querySelector<HTMLElement>('#pix-qr-placeholder');
-  const chave = getPixChave();
   if (pixChave) pixChave.textContent = chave;
   const qr = getPixQr().trim();
   if (pixQr && pixPlaceholder) {
@@ -163,6 +187,7 @@ function mountDynamicFields(root: HTMLElement): void {
   const itensLista = root.querySelector<HTMLElement>('#itens-lista');
   const csrfInput = root.querySelector<HTMLInputElement>('#csrf');
   const telefoneInput = root.querySelector<HTMLInputElement>('#telefone');
+  const nomeInput = root.querySelector<HTMLInputElement>('#nome');
 
   if (!equipeSelect || !itensLista || !csrfInput || !telefoneInput) return;
 
@@ -224,6 +249,7 @@ function mountDynamicFields(root: HTMLElement): void {
         row.classList.remove('item-row-selected');
         qty.value = '';
       }
+      updateSubmitButtonState(root);
     };
 
     const clampQty = (): void => {
@@ -254,16 +280,19 @@ function mountDynamicFields(root: HTMLElement): void {
     telefoneInput.value = formatPhoneBr(telefoneInput.value);
   };
 
+  nomeInput?.addEventListener('input', () => updateSubmitButtonState(root));
+  equipeSelect.addEventListener('change', () => updateSubmitButtonState(root));
+
   renderPublicSections(root);
 }
 
 function bindPixCopy(root: HTMLElement): void {
   const btn = root.querySelector<HTMLButtonElement>('#btn-copiar-pix');
-  const feedback = root.querySelector<HTMLElement>('#pix-copiado');
-  if (!btn || !feedback) return;
+  if (!btn) return;
 
   btn.onclick = async () => {
     const chave = getPixChave();
+    if (!chave.trim()) return;
     try {
       await navigator.clipboard.writeText(chave);
     } catch {
@@ -274,10 +303,7 @@ function bindPixCopy(root: HTMLElement): void {
       document.execCommand('copy');
       document.body.removeChild(ta);
     }
-    feedback.hidden = false;
-    window.setTimeout(() => {
-      feedback.hidden = true;
-    }, 2500);
+    toastSuccess('Chave Pix copiada!');
   };
 }
 
@@ -373,13 +399,15 @@ export function renderFormDoacao(): HTMLElement {
       form.reset();
       mountDynamicFields(wrapper);
 
-      setFeedback(feedback, 'Doacao registrada com sucesso!', true);
+      feedback.textContent = 'Doacao registrada com sucesso!';
+      toastSuccess('Doacao registrada com sucesso!');
       csrf.value = getOrCreateClientCsrfToken();
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao registrar doacao.';
-      setFeedback(feedback, msg, false);
+      feedback.textContent = msg;
+      toastError(msg);
     } finally {
-      btn.disabled = false;
+      updateSubmitButtonState(wrapper);
     }
   });
 

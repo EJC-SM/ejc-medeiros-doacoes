@@ -3,6 +3,7 @@ import type { AuthRole } from '../../../state/types';
 import { getEmbeddedDirigenteAuthHeaders } from '../../../utils/auth';
 import { setButtonContent } from '../../../utils/icons';
 import { fetchAuthChallenge, hashForStorage, validatePasswordPolicy } from '../../../utils/password-auth';
+import { toastError, toastSuccess, toastWarning } from '../../../utils/toast';
 
 function formatUpdatedAt(value: string | null): string {
   if (!value) return 'Ainda nao definida';
@@ -52,7 +53,14 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
   const save = document.createElement('button');
   save.type = 'button';
   save.className = 'btn btn--filled';
+  save.disabled = true;
   setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
+
+  const syncSaveState = (): void => {
+    save.disabled = !newInput.value.trim() || !confirmInput.value.trim();
+  };
+  newInput.addEventListener('input', syncSaveState);
+  confirmInput.addEventListener('input', syncSaveState);
 
   save.addEventListener('click', () => {
     void (async () => {
@@ -63,11 +71,13 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
       if (policyError) {
         error.textContent = policyError;
         error.hidden = false;
+        toastWarning(policyError);
         return;
       }
       if (next !== confirm) {
         error.textContent = 'As senhas nao conferem.';
         error.hidden = false;
+        toastWarning('As senhas nao conferem.');
         return;
       }
 
@@ -78,6 +88,7 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
       if (!challenge?.salt) {
         error.textContent = 'Nao foi possivel preparar a troca de senha.';
         error.hidden = false;
+        toastError('Nao foi possivel preparar a troca de senha.');
         save.disabled = false;
         setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
         return;
@@ -87,6 +98,7 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
       if (!passwordHash) {
         error.textContent = 'Senha invalida.';
         error.hidden = false;
+        toastError('Senha invalida.');
         save.disabled = false;
         setButtonContent(save, { icon: 'key', label: 'Salvar nova senha' });
         return;
@@ -99,11 +111,14 @@ function buildPasswordForm(role: AuthRole, label: string): HTMLElement {
       if (!ok) {
         error.textContent = 'Nao foi possivel alterar a senha.';
         error.hidden = false;
+        toastError('Nao foi possivel alterar a senha.');
         return;
       }
 
       newInput.value = '';
       confirmInput.value = '';
+      syncSaveState();
+      toastSuccess(`Senha do ${role === 'coordenador' ? 'Coordenador' : 'Dirigente'} atualizada.`);
       const status = await fetchAuthSetupStatus();
       if (status) {
         meta.textContent =

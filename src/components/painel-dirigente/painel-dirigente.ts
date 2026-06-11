@@ -1,4 +1,6 @@
+import { confirmAction } from '../../utils/confirm-dialog';
 import { setButtonContent } from '../../utils/icons';
+import { toastError, toastSuccess, toastWarning } from '../../utils/toast';
 import template from './painel-dirigente.html?raw';
 import './painel-dirigente.css';
 import { lockEtapaApi, resetDoacoesApi, resetItensApi, updateConfigApi } from '../../state/api';
@@ -42,11 +44,9 @@ export interface DirigentePanelOptions {
 let pixPreview = '';
 let logoPreview = '';
 
-function setFeedback(root: HTMLElement, message: string, ok: boolean): void {
-  const el = root.querySelector<HTMLElement>('#dir-feedback');
-  if (!el) return;
-  el.textContent = message;
-  el.className = ok ? 'dir-ok' : 'dir-err';
+function updateSalvarLogoState(root: HTMLElement): void {
+  const btn = root.querySelector<HTMLButtonElement>('#dir-salvar-logo');
+  if (btn) btn.disabled = !logoPreview;
 }
 
 function readImageFile(file: File): Promise<string> {
@@ -226,6 +226,7 @@ function bindDropzone(
         fileId === '#dir-logo-file' ? '#dir-logo-drop-label' : '#dir-pix-drop-label',
       );
       if (preview && label) onImage(dataUrl, preview, label);
+      if (fileId === '#dir-logo-file') updateSalvarLogoState(root);
     });
   });
 
@@ -239,8 +240,9 @@ function bindDropzone(
         fileId === '#dir-logo-file' ? '#dir-logo-drop-label' : '#dir-pix-drop-label',
       );
       if (preview && label) onImage(dataUrl, preview, label);
+      if (fileId === '#dir-logo-file') updateSalvarLogoState(root);
     } catch (err) {
-      setFeedback(root, err instanceof Error ? err.message : 'Erro ao ler imagem.', false);
+      toastError(err instanceof Error ? err.message : 'Erro ao ler imagem.');
     }
   });
 }
@@ -255,13 +257,13 @@ function bindEquipeForm(root: HTMLElement, etapa: Etapa): void {
     const nome = sanitizeText(nomeInput.value);
     const nv = validateNome(nome);
     if (!nv.valid) {
-      setFeedback(root, nv.message || 'Equipe invalida.', false);
+      toastError(nv.message || 'Equipe invalida.');
       return;
     }
 
     const equipes = getEquipes(etapa);
     if (equipes.some((eq) => eq.toLowerCase() === nome.toLowerCase())) {
-      setFeedback(root, 'Equipe ja existe.', false);
+      toastWarning('Equipe ja existe.');
       return;
     }
 
@@ -270,7 +272,7 @@ function bindEquipeForm(root: HTMLElement, etapa: Etapa): void {
     await syncConfigLocal(root, { etapa, equipes }, `config/equipes${etapa}`, equipes);
     form.reset();
     renderEquipesForEtapa(root, etapa);
-    setFeedback(root, 'Equipe adicionada.', true);
+    toastSuccess('Equipe adicionada.');
   });
 }
 
@@ -290,7 +292,7 @@ function bindRemoveActions(root: HTMLElement): void {
     setEquipes(etapa, equipes);
     await syncConfigLocal(root, { etapa, equipes }, `config/equipes${etapa}`, equipes);
     renderEquipesForEtapa(root, etapa);
-    setFeedback(root, 'Equipe removida.', true);
+    toastSuccess('Equipe removida.');
   });
 }
 
@@ -305,7 +307,7 @@ function bindBranding(root: HTMLElement): void {
       'config',
       { nome_evento: nome, versiculo, versiculo_ref: versiculoRef },
     );
-    setFeedback(root, 'Branding salvo.', true);
+    toastSuccess('Branding salvo.');
   });
 }
 
@@ -318,6 +320,8 @@ function bindPix(root: HTMLElement): void {
   });
 
   root.querySelector('#dir-salvar-pix')?.addEventListener('click', async () => {
+    const btn = root.querySelector<HTMLButtonElement>('#dir-salvar-pix');
+    if (btn) btn.disabled = true;
     const chave = sanitizeText((root.querySelector('#dir-pix-chave') as HTMLInputElement).value);
     await syncConfigLocal(
       root,
@@ -326,7 +330,8 @@ function bindPix(root: HTMLElement): void {
       { pix_chave: chave, pix_qr: pixPreview || getPixQr() },
     );
     pixPreview = '';
-    setFeedback(root, 'Pix salvo.', true);
+    if (btn) btn.disabled = false;
+    toastSuccess('Pix salvo.');
   });
 }
 
@@ -339,23 +344,29 @@ function bindLogo(root: HTMLElement): void {
   });
 
   root.querySelector('#dir-salvar-logo')?.addEventListener('click', async () => {
+    const btn = root.querySelector<HTMLButtonElement>('#dir-salvar-logo');
+    if (btn) btn.disabled = true;
     const logo = logoPreview || getLogo();
     setLogo(logo);
     await syncConfigLocal(root, { etapa: getEtapaAtual(), logo }, 'config/logo', logo);
     logoPreview = '';
-    setFeedback(root, 'Logo salvo.', true);
+    updateSalvarLogoState(root);
+    toastSuccess('Logo salvo.');
   });
 
   root.querySelector('#dir-restaurar-logo')?.addEventListener('click', async () => {
     setLogo('');
     await syncConfigLocal(root, { etapa: getEtapaAtual(), logo: '' }, 'config/logo', '');
+    logoPreview = '';
     renderBrandingFields(root);
-    setFeedback(root, 'Logo restaurado.', true);
+    updateSalvarLogoState(root);
+    toastSuccess('Logo restaurado.');
   });
 }
 
 function bindLockActions(root: HTMLElement): void {
-  const toggle = async (etapa: 0 | Etapa): Promise<void> => {
+  const toggle = async (etapa: 0 | Etapa, btn?: HTMLButtonElement): Promise<void> => {
+    if (btn) btn.disabled = true;
     const locked = getEtapaLocked();
     const next = locked === etapa && etapa !== 0 ? 0 : etapa;
     const ok = await lockEtapaApi(next, getEmbeddedDirigenteAuthHeaders());
@@ -367,38 +378,63 @@ function bindLockActions(root: HTMLElement): void {
     refreshHeader();
     refreshFormDoacao();
     refreshPainelCoordenador();
-    setFeedback(root, next === 0 ? 'Etapas destravadas.' : `Etapa ${next} travada.`, true);
+    toastSuccess(next === 0 ? 'Etapas destravadas.' : `Etapa ${next} travada.`);
+    if (btn) btn.disabled = false;
   };
 
-  root.querySelector('#dir-trava-1')?.addEventListener('click', () => void toggle(1));
-  root.querySelector('#dir-trava-2')?.addEventListener('click', () => void toggle(2));
-  root.querySelector('#dir-destravar')?.addEventListener('click', () => void toggle(0));
+  root.querySelector('#dir-trava-1')?.addEventListener('click', (e) => {
+    void toggle(1, (e.currentTarget as HTMLButtonElement) ?? undefined);
+  });
+  root.querySelector('#dir-trava-2')?.addEventListener('click', (e) => {
+    void toggle(2, (e.currentTarget as HTMLButtonElement) ?? undefined);
+  });
+  root.querySelector('#dir-destravar')?.addEventListener('click', (e) => {
+    void toggle(0, (e.currentTarget as HTMLButtonElement) ?? undefined);
+  });
 }
 
 function bindDangerZone(root: HTMLElement): void {
   root.querySelector('#dir-reset-doacoes')?.addEventListener('click', async () => {
     const etapa = getEtapaAtual();
-    if (!window.confirm(`Apagar TODAS as doacoes da ${etapa}a Etapa? Esta acao e irreversivel.`)) return;
-    const ok = await resetDoacoesApi(etapa, getEmbeddedDirigenteAuthHeaders());
-    if (ok) {
+    const ok = await confirmAction({
+      title: 'Resetar doacoes',
+      message: `Apagar TODAS as doacoes da ${etapa}a Etapa? Esta acao e irreversivel.`,
+      confirmLabel: 'Resetar',
+      danger: true,
+    });
+    if (!ok) return;
+    const btn = root.querySelector<HTMLButtonElement>('#dir-reset-doacoes');
+    if (btn) btn.disabled = true;
+    const success = await resetDoacoesApi(etapa, getEmbeddedDirigenteAuthHeaders());
+    if (success) {
       refreshPainelCoordenador();
       refreshFormDoacao();
-      setFeedback(root, 'Doacoes resetadas.', true);
+      toastSuccess('Doacoes resetadas.');
     } else {
-      setFeedback(root, 'Falha ao resetar doacoes.', false);
+      toastError('Falha ao resetar doacoes.');
     }
+    if (btn) btn.disabled = false;
   });
 
   root.querySelector('#dir-reset-itens')?.addEventListener('click', async () => {
-    if (!window.confirm('Restaurar itens padrao? Isso substitui os itens personalizados.')) return;
-    const ok = await resetItensApi(getEtapaAtual(), getEmbeddedDirigenteAuthHeaders());
-    if (ok) {
+    const ok = await confirmAction({
+      title: 'Restaurar itens',
+      message: 'Restaurar itens padrao? Isso substitui os itens personalizados.',
+      confirmLabel: 'Restaurar',
+      danger: true,
+    });
+    if (!ok) return;
+    const btn = root.querySelector<HTMLButtonElement>('#dir-reset-itens');
+    if (btn) btn.disabled = true;
+    const success = await resetItensApi(getEtapaAtual(), getEmbeddedDirigenteAuthHeaders());
+    if (success) {
       refreshFormDoacao();
       refreshPainelCoordenador();
-      setFeedback(root, 'Itens restaurados.', true);
+      toastSuccess('Itens restaurados.');
     } else {
-      setFeedback(root, 'Falha ao restaurar itens.', false);
+      toastError('Falha ao restaurar itens.');
     }
+    if (btn) btn.disabled = false;
   });
 }
 
@@ -415,6 +451,7 @@ function mountPanel(root: HTMLElement): void {
   bindLogo(root);
   bindLockActions(root);
   bindDangerZone(root);
+  updateSalvarLogoState(root);
   const senhasHost = root.querySelector<HTMLElement>('#dir-senhas-host');
   if (senhasHost) void mountSecSenhas(senhasHost);
 }

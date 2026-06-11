@@ -2,11 +2,7 @@ import type { AuthSetupStatus } from '../../state/api';
 import { initialSetupApi } from '../../state/api';
 import { setButtonContent } from '../../utils/icons';
 import { hashForStorage, validatePasswordPolicy } from '../../utils/password-auth';
-
-function setMessage(el: HTMLElement, text: string, ok: boolean): void {
-  el.textContent = text;
-  el.className = ok ? 'setup-ok' : 'setup-err';
-}
+import { toastError, toastSuccess, toastWarning } from '../../utils/toast';
 
 export function mountInitialSetup(
   container: HTMLElement,
@@ -41,7 +37,7 @@ export function mountInitialSetup(
       <label for="setup-dir-confirm">Confirmar senha</label>
       <input id="setup-dir-confirm" type="password" autocomplete="new-password" maxlength="80" />
     </fieldset>
-    <p id="setup-feedback" role="status" aria-live="polite"></p>
+    <p id="setup-feedback" class="sr-only" role="status" aria-live="polite"></p>
     <button id="setup-submit" type="button" class="btn btn--filled btn--block">
       <span class="icon material-symbols-outlined" aria-hidden="true">done_all</span>
       Concluir setup inicial
@@ -62,7 +58,8 @@ export function mountInitialSetup(
       const dirConfirm = (card.querySelector('#setup-dir-confirm') as HTMLInputElement).value;
 
       if (!token) {
-        setMessage(feedback, 'Informe o token de setup.', false);
+        feedback.textContent = 'Informe o token de setup.';
+        toastWarning('Informe o token de setup.');
         return;
       }
 
@@ -72,23 +69,27 @@ export function mountInitialSetup(
       ] as const) {
         const policyError = validatePasswordPolicy(pass);
         if (policyError) {
-          setMessage(feedback, `${label}: ${policyError}`, false);
+          feedback.textContent = `${label}: ${policyError}`;
+          toastWarning(`${label}: ${policyError}`);
           return;
         }
       }
 
       if (coordPass !== coordConfirm) {
-        setMessage(feedback, 'Senhas do Coordenador nao conferem.', false);
+        feedback.textContent = 'Senhas do Coordenador nao conferem.';
+        toastWarning('Senhas do Coordenador nao conferem.');
         return;
       }
       if (dirPass !== dirConfirm) {
-        setMessage(feedback, 'Senhas do Dirigente nao conferem.', false);
+        feedback.textContent = 'Senhas do Dirigente nao conferem.';
+        toastWarning('Senhas do Dirigente nao conferem.');
         return;
       }
 
       const salts = status.salts;
       if (!salts?.coord || !salts?.dir) {
-        setMessage(feedback, 'Salts indisponiveis. Recarregue a pagina.', false);
+        feedback.textContent = 'Salts indisponiveis. Recarregue a pagina.';
+        toastError('Salts indisponiveis. Recarregue a pagina.');
         return;
       }
 
@@ -101,7 +102,8 @@ export function mountInitialSetup(
       ]);
 
       if (!coordHash || !dirHash) {
-        setMessage(feedback, 'Nao foi possivel gerar os hashes.', false);
+        feedback.textContent = 'Nao foi possivel gerar os hashes.';
+        toastError('Nao foi possivel gerar os hashes.');
         submit.disabled = false;
         setButtonContent(submit, { icon: 'done_all', label: 'Concluir setup inicial' });
         return;
@@ -118,11 +120,13 @@ export function mountInitialSetup(
             : result.error === 'setup_already_completed'
               ? 'Setup ja foi concluido.'
               : 'Falha no setup inicial.';
-        setMessage(feedback, msg, false);
+        feedback.textContent = msg;
+        toastError(msg);
         return;
       }
 
-      setMessage(feedback, 'Setup concluido. Carregando aplicativo...', true);
+      feedback.textContent = 'Setup concluido. Carregando aplicativo...';
+      toastSuccess('Setup concluido. Carregando aplicativo...');
       onComplete();
     })();
   });

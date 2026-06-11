@@ -29,7 +29,7 @@
       </div>
     </details>
 
-    <details class="dir-accordion" id="dir-accordion-senhas" open>
+    <details class="dir-accordion" id="dir-accordion-senhas">
       <summary>
         <span class="summary-with-icon">
           <span class="icon material-symbols-outlined" aria-hidden="true">password</span>
@@ -58,14 +58,14 @@
           <img id="dir-logo-preview" class="dir-preview" src="" alt="Preview logo" hidden />
         </div>
         <input id="dir-logo-file" type="file" accept="image/*" hidden />
-        <div class="dir-actions">
-          <button id="dir-salvar-logo" type="button" class="btn btn--filled btn--sm">
-            <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
-            Salvar logo
-          </button>
+        <div class="dir-actions btn-row">
           <button id="dir-restaurar-logo" type="button" class="btn btn--outline btn--sm">
             <span class="icon material-symbols-outlined" aria-hidden="true">restart_alt</span>
             Restaurar logo padrao
+          </button>
+          <button id="dir-salvar-logo" type="button" class="btn btn--filled btn--sm" disabled>
+            <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
+            Salvar logo
           </button>
         </div>
 
@@ -166,6 +166,5 @@
       </div>
     </details>
 
-    <p id="dir-feedback" role="status" aria-live="polite"></p>
   </div>
 </div>

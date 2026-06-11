@@ -1,5 +1,6 @@
 import type { AuthRole } from '../state/types';
 import { setButtonContent } from '../utils/icons';
+import { toastError } from '../utils/toast';
 
 interface LoginGateOptions {
   role: AuthRole;
@@ -59,8 +60,7 @@ export function renderLoginGate(options: LoginGateOptions): HTMLElement {
     submit.disabled = false;
     setButtonContent(submit, { icon: 'login', label: 'Entrar' });
     if (!result.ok) {
-      error.textContent = result.message || 'Credenciais invalidas.';
-      error.hidden = false;
+      toastError(result.message || 'Credenciais invalidas.');
       return;
     }
     options.onSuccess();

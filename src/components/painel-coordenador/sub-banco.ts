@@ -9,8 +9,11 @@ import {
 } from '../../state/store';
 import type { CategoriaCatalogo, ItemCatalogo } from '../../state/types';
 import { getBancoAuthHeaders, isBancoDesbloqueado, unlockBanco } from '../../utils/auth';
+import { confirmAction } from '../../utils/confirm-dialog';
 import { setButtonContent } from '../../utils/icons';
+import { openModalShell } from '../../utils/modal-shell';
 import { sanitizeText } from '../../utils/security';
+import { toastError, toastSuccess, toastWarning } from '../../utils/toast';
 import { refreshFormDoacao } from '../form-doacao/form-doacao';
 
 const UNIDADES = ['kg', 'g', 'L', 'ml', 'un', 'pct', 'dz', 'cx'];
@@ -98,9 +101,18 @@ function buildItemRow(
   setButtonContent(removeBtn, { icon: 'delete', label: 'Remover' });
   removeBtn.onclick = () => {
     const itens = getItensCatalogoRaw();
-    if (!window.confirm(`Remover "${itens[idx].nome}" da lista?`)) return;
-    itens.splice(idx, 1);
-    void persistCatalogo(itens, getCategorias()).then(() => renderBanco(root));
+    const itemNome = itens[idx]?.nome ?? 'item';
+    void confirmAction({
+      title: 'Remover item',
+      message: `Remover "${itemNome}" da lista?`,
+      confirmLabel: 'Remover',
+      danger: true,
+    }).then((ok) => {
+      if (!ok) return;
+      itens.splice(idx, 1);
+      void persistCatalogo(itens, getCategorias()).then(() => renderBanco(root));
+      toastSuccess('Item removido.');
+    });
   };
 
   actions.appendChild(visBtn);
@@ -152,10 +164,18 @@ function renderCatList(root: HTMLElement): void {
     removeBtn.className = 'btn btn--danger-outline btn--sm';
     setButtonContent(removeBtn, { icon: 'delete', label: 'Remover' });
     removeBtn.onclick = () => {
-      if (!window.confirm('Remover esta categoria?')) return;
-      const next = getCategorias().filter((c) => c.id !== cat.id);
-      void persistCatalogo(getItensCatalogoRaw(), next).then(() => {
-        renderBanco(root);
+      void confirmAction({
+        title: 'Remover categoria',
+        message: `Remover a categoria "${cat.nome}"?`,
+        confirmLabel: 'Remover',
+        danger: true,
+      }).then((ok) => {
+        if (!ok) return;
+        const next = getCategorias().filter((c) => c.id !== cat.id);
+        void persistCatalogo(getItensCatalogoRaw(), next).then(() => {
+          renderBanco(root);
+          toastSuccess('Categoria removida.');
+        });
       });
     };
     actions.appendChild(removeBtn);
@@ -225,52 +245,56 @@ function openUnlockModal(root: HTMLElement): void {
   const host = root.querySelector<HTMLElement>('#db-modal-host');
   if (!host) return;
 
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay open';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
+  openModalShell({
+    host,
+    title: 'Banco de Dados',
+    bodyHtml: `
+      <p class="modal-message">Digite a senha do Dirigente para editar os itens de doacao.</p>
+      <label for="db-unlock-pass">Senha do Dirigente</label>
+      <input id="db-unlock-pass" type="password" maxlength="80" autocomplete="current-password" />
+      <p id="db-unlock-error" class="login-error" hidden></p>
+      <div class="btn-row">
+        <button type="button" id="db-unlock-cancel" class="btn btn--outline">
+          <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
+          Cancelar
+        </button>
+        <button type="button" id="db-unlock-submit" class="btn btn--filled" disabled>
+          <span class="icon material-symbols-outlined" aria-hidden="true">lock_open</span>
+          Desbloquear
+        </button>
+      </div>
+    `,
+    onMount: (modal, close) => {
+      const passInput = modal.querySelector<HTMLInputElement>('#db-unlock-pass');
+      const submitBtn = modal.querySelector<HTMLButtonElement>('#db-unlock-submit');
+      const error = modal.querySelector<HTMLElement>('#db-unlock-error');
 
-  const modal = document.createElement('section');
-  modal.className = 'modal-card';
-  modal.innerHTML = `
-    <h3>Banco de Dados</h3>
-    <p>Digite a senha do Dirigente para editar os itens de doacao.</p>
-    <label for="db-unlock-pass">Senha do Dirigente</label>
-    <input id="db-unlock-pass" type="password" maxlength="80" autocomplete="current-password" />
-    <p id="db-unlock-error" class="login-error" hidden></p>
-    <div class="coord-export-actions">
-      <button type="button" id="db-unlock-submit" class="btn btn--filled">
-        <span class="icon material-symbols-outlined" aria-hidden="true">lock_open</span>
-        Desbloquear
-      </button>
-      <button type="button" id="db-unlock-cancel" class="btn btn--outline">
-        <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
-        Cancelar
-      </button>
-    </div>
-  `;
+      passInput?.addEventListener('input', () => {
+        if (submitBtn) submitBtn.disabled = !passInput.value.trim();
+      });
+      passInput?.focus();
 
-  overlay.appendChild(modal);
-  host.replaceChildren(overlay);
-
-  const close = (): void => {
-    host.replaceChildren();
-  };
-
-  modal.querySelector('#db-unlock-cancel')?.addEventListener('click', close);
-  modal.querySelector('#db-unlock-submit')?.addEventListener('click', async () => {
-    const pass = (modal.querySelector('#db-unlock-pass') as HTMLInputElement).value;
-    const error = modal.querySelector<HTMLElement>('#db-unlock-error');
-    const ok = await unlockBanco(pass);
-    if (!ok) {
-      if (error) {
-        error.textContent = 'Senha incorreta.';
-        error.hidden = false;
-      }
-      return;
-    }
-    close();
-    renderBanco(root);
+      modal.querySelector('#db-unlock-cancel')?.addEventListener('click', close);
+      modal.querySelector('#db-unlock-submit')?.addEventListener('click', () => {
+        void (async () => {
+          if (!passInput || !submitBtn) return;
+          submitBtn.disabled = true;
+          const ok = await unlockBanco(passInput.value);
+          if (!ok) {
+            if (error) {
+              error.textContent = 'Senha incorreta.';
+              error.hidden = false;
+            }
+            toastError('Senha incorreta.');
+            submitBtn.disabled = !passInput.value.trim();
+            return;
+          }
+          close();
+          renderBanco(root);
+          toastSuccess('Banco de dados desbloqueado.');
+        })();
+      });
+    },
   });
 }
 
@@ -278,47 +302,50 @@ function openAddCatModal(root: HTMLElement): void {
   const host = root.querySelector<HTMLElement>('#db-modal-host');
   if (!host) return;
 
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay open';
+  openModalShell({
+    host,
+    title: 'Nova categoria',
+    bodyHtml: `
+      <label for="cat-nome">Nome da categoria</label>
+      <input id="cat-nome" type="text" maxlength="80" placeholder="Ex: Enlatados" />
+      <p id="cat-error" class="login-error" hidden>Preencha o nome.</p>
+      <div class="btn-row">
+        <button type="button" id="cat-cancel" class="btn btn--outline">
+          <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
+          Cancelar
+        </button>
+        <button type="button" id="cat-save" class="btn btn--filled" disabled>
+          <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
+          Salvar
+        </button>
+      </div>
+    `,
+    onMount: (modal, close) => {
+      const nomeInput = modal.querySelector<HTMLInputElement>('#cat-nome');
+      const saveBtn = modal.querySelector<HTMLButtonElement>('#cat-save');
+      nomeInput?.addEventListener('input', () => {
+        if (saveBtn) saveBtn.disabled = !nomeInput.value.trim();
+      });
+      nomeInput?.focus();
 
-  const modal = document.createElement('section');
-  modal.className = 'modal-card';
-  modal.innerHTML = `
-    <h3>Nova categoria</h3>
-    <label for="cat-nome">Nome da categoria</label>
-    <input id="cat-nome" type="text" maxlength="80" placeholder="Ex: Enlatados" />
-    <p id="cat-error" class="login-error" hidden>Preencha o nome.</p>
-    <div class="coord-export-actions">
-      <button type="button" id="cat-save" class="btn btn--filled">
-        <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
-        Salvar
-      </button>
-      <button type="button" id="cat-cancel" class="btn btn--outline">
-        <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
-        Cancelar
-      </button>
-    </div>
-  `;
-
-  overlay.appendChild(modal);
-  host.replaceChildren(overlay);
-
-  const close = (): void => host.replaceChildren();
-
-  modal.querySelector('#cat-cancel')?.addEventListener('click', close);
-  modal.querySelector('#cat-save')?.addEventListener('click', () => {
-    const nome = sanitizeText((modal.querySelector('#cat-nome') as HTMLInputElement).value);
-    const error = modal.querySelector<HTMLElement>('#cat-error');
-    if (!nome) {
-      if (error) error.hidden = false;
-      return;
-    }
-    const cats = getCategorias();
-    cats.push({ id: `cat_${Date.now()}`, nome });
-    void persistCatalogo(getItensCatalogoRaw(), cats).then(() => {
-      close();
-      renderBanco(root);
-    });
+      modal.querySelector('#cat-cancel')?.addEventListener('click', close);
+      modal.querySelector('#cat-save')?.addEventListener('click', () => {
+        const nome = sanitizeText(nomeInput?.value || '');
+        const error = modal.querySelector<HTMLElement>('#cat-error');
+        if (!nome) {
+          if (error) error.hidden = false;
+          toastWarning('Preencha o nome da categoria.');
+          return;
+        }
+        const cats = getCategorias();
+        cats.push({ id: `cat_${Date.now()}`, nome });
+        void persistCatalogo(getItensCatalogoRaw(), cats).then(() => {
+          close();
+          renderBanco(root);
+          toastSuccess('Categoria adicionada.');
+        });
+      });
+    },
   });
 }
 
@@ -327,98 +354,108 @@ function openEditModal(root: HTMLElement, idx: number): void {
   if (!host) return;
 
   const item = getItensCatalogoRaw()[idx];
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay open';
 
-  const modal = document.createElement('section');
-  modal.className = 'modal-card';
-  modal.innerHTML = `
-    <h3>Editar item</h3>
-    <label for="edit-item-nome">Nome</label>
-    <input id="edit-item-nome" type="text" maxlength="80" value="" />
-    <label for="edit-item-un">Unidade</label>
-    <select id="edit-item-un"></select>
-    <label for="edit-item-meta">Meta</label>
-    <input id="edit-item-meta" type="number" min="0" step="1" />
-    <label for="edit-item-cat">Categoria</label>
-    <select id="edit-item-cat"></select>
-    <p id="edit-error" class="login-error" hidden>Preencha o nome.</p>
-    <div class="coord-export-actions">
-      <button type="button" id="edit-save" class="btn btn--filled">
-        <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
-        Salvar
-      </button>
-      <button type="button" id="edit-cancel" class="btn btn--outline">
-        <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
-        Cancelar
-      </button>
-    </div>
-  `;
+  openModalShell({
+    host,
+    title: 'Editar item',
+    bodyHtml: `
+      <label for="edit-item-nome">Nome</label>
+      <input id="edit-item-nome" type="text" maxlength="80" value="" />
+      <label for="edit-item-un">Unidade</label>
+      <select id="edit-item-un"></select>
+      <label for="edit-item-meta">Meta</label>
+      <input id="edit-item-meta" type="number" min="0" step="1" />
+      <label for="edit-item-cat">Categoria</label>
+      <select id="edit-item-cat"></select>
+      <p id="edit-error" class="login-error" hidden>Preencha o nome.</p>
+      <div class="btn-row">
+        <button type="button" id="edit-cancel" class="btn btn--outline">
+          <span class="icon material-symbols-outlined" aria-hidden="true">close</span>
+          Cancelar
+        </button>
+        <button type="button" id="edit-save" class="btn btn--filled">
+          <span class="icon material-symbols-outlined" aria-hidden="true">save</span>
+          Salvar
+        </button>
+      </div>
+    `,
+    onMount: (modal, close) => {
+      const unSelect = modal.querySelector<HTMLSelectElement>('#edit-item-un');
+      const catSelect = modal.querySelector<HTMLSelectElement>('#edit-item-cat');
+      if (unSelect) {
+        for (const u of UNIDADES) {
+          const opt = document.createElement('option');
+          opt.value = u;
+          opt.textContent = u;
+          unSelect.appendChild(opt);
+        }
+        unSelect.value = item.unidade;
+      }
+      if (catSelect) populateCatSelect(catSelect, item.cat || '');
 
-  overlay.appendChild(modal);
-  host.replaceChildren(overlay);
+      const nomeInput = modal.querySelector<HTMLInputElement>('#edit-item-nome');
+      if (nomeInput) nomeInput.value = item.nome;
+      const metaInput = modal.querySelector<HTMLInputElement>('#edit-item-meta');
+      if (metaInput) metaInput.value = String(item.meta || '');
+      nomeInput?.focus();
 
-  const unSelect = modal.querySelector<HTMLSelectElement>('#edit-item-un');
-  const catSelect = modal.querySelector<HTMLSelectElement>('#edit-item-cat');
-  if (unSelect) {
-    for (const u of UNIDADES) {
-      const opt = document.createElement('option');
-      opt.value = u;
-      opt.textContent = u;
-      unSelect.appendChild(opt);
-    }
-    unSelect.value = item.unidade;
-  }
-  if (catSelect) populateCatSelect(catSelect, item.cat || '');
-
-  (modal.querySelector('#edit-item-nome') as HTMLInputElement).value = item.nome;
-  (modal.querySelector('#edit-item-meta') as HTMLInputElement).value = String(item.meta || '');
-
-  const close = (): void => host.replaceChildren();
-
-  modal.querySelector('#edit-cancel')?.addEventListener('click', close);
-  modal.querySelector('#edit-save')?.addEventListener('click', () => {
-    const nome = sanitizeText((modal.querySelector('#edit-item-nome') as HTMLInputElement).value);
-    const un = (modal.querySelector('#edit-item-un') as HTMLSelectElement).value;
-    const meta = Number((modal.querySelector('#edit-item-meta') as HTMLInputElement).value) || 0;
-    const cat = (modal.querySelector('#edit-item-cat') as HTMLSelectElement).value;
-    const error = modal.querySelector<HTMLElement>('#edit-error');
-    if (!nome) {
-      if (error) error.hidden = false;
-      return;
-    }
-    const itens = getItensCatalogoRaw();
-    itens[idx] = { ...itens[idx], nome, unidade: un, meta, cat, visivel: itens[idx].visivel !== false };
-    void persistCatalogo(itens, getCategorias()).then(() => {
-      close();
-      renderBanco(root);
-    });
+      modal.querySelector('#edit-cancel')?.addEventListener('click', close);
+      modal.querySelector('#edit-save')?.addEventListener('click', () => {
+        const nome = sanitizeText(nomeInput?.value || '');
+        const un = (modal.querySelector('#edit-item-un') as HTMLSelectElement).value;
+        const meta = Number(metaInput?.value) || 0;
+        const cat = (modal.querySelector('#edit-item-cat') as HTMLSelectElement).value;
+        const error = modal.querySelector<HTMLElement>('#edit-error');
+        if (!nome) {
+          if (error) error.hidden = false;
+          toastWarning('Preencha o nome do item.');
+          return;
+        }
+        const itens = getItensCatalogoRaw();
+        itens[idx] = { ...itens[idx], nome, unidade: un, meta, cat, visivel: itens[idx].visivel !== false };
+        void persistCatalogo(itens, getCategorias()).then(() => {
+          close();
+          renderBanco(root);
+          toastSuccess('Item atualizado.');
+        });
+      });
+    },
   });
 }
 
 function mountAddItemForm(root: HTMLElement): void {
   const btn = root.querySelector<HTMLButtonElement>('#db-add-item');
-  if (!btn) return;
+  const nomeInput = root.querySelector<HTMLInputElement>('#db-novo-nome');
+  if (!btn || !nomeInput) return;
+
+  const syncBtn = (): void => {
+    btn.disabled = !sanitizeText(nomeInput.value);
+  };
+  nomeInput.addEventListener('input', syncBtn);
+  syncBtn();
 
   btn.onclick = () => {
-    const nome = sanitizeText((root.querySelector('#db-novo-nome') as HTMLInputElement)?.value || '');
+    const nome = sanitizeText(nomeInput.value);
     const un = (root.querySelector('#db-novo-un') as HTMLSelectElement)?.value || 'un';
     const meta = Number((root.querySelector('#db-novo-meta') as HTMLInputElement)?.value) || 0;
     const cat = (root.querySelector('#db-novo-cat') as HTMLSelectElement)?.value || '';
     if (!nome) {
-      window.alert('Digite o nome do item.');
+      toastWarning('Digite o nome do item.');
       return;
     }
     const itens = getItensCatalogoRaw();
     if (itens.some((i) => i.nome.toLowerCase() === nome.toLowerCase())) {
-      window.alert('Item ja existe.');
+      toastWarning('Item ja existe.');
       return;
     }
+    btn.disabled = true;
     itens.push({ nome, unidade: un, meta, cat, visivel: true });
     void persistCatalogo(itens, getCategorias()).then(() => {
-      (root.querySelector('#db-novo-nome') as HTMLInputElement).value = '';
+      nomeInput.value = '';
       (root.querySelector('#db-novo-meta') as HTMLInputElement).value = '';
       renderBanco(root);
+      syncBtn();
+      toastSuccess('Item adicionado.');
     });
   };
 }
@@ -457,7 +494,7 @@ export function renderSubBanco(): HTMLElement {
             <label for="db-novo-cat">Categoria</label>
             <select id="db-novo-cat"></select>
           </div>
-          <button id="db-add-item" type="button" class="db-add-btn btn btn--filled">
+          <button id="db-add-item" type="button" class="db-add-btn btn btn--filled" disabled>
             <span class="icon material-symbols-outlined" aria-hidden="true">add</span>
             Adicionar item
           </button>

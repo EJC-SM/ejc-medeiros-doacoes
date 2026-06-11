@@ -84,13 +84,18 @@
 
 .coord-entrega-form {
   display: grid;
-  grid-template-columns: 1fr 1fr 150px 110px;
   gap: 0.45rem;
   margin-top: 0.5rem;
 }
 
+.coord-entrega-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
 @media (max-width: 900px) {
-  .coord-entrega-form {
+  .coord-entrega-fields {
     grid-template-columns: 1fr;
   }
 }
@@ -108,13 +113,22 @@
   border-bottom: 0;
 }
 
-.panel-toolbar,
-.coord-export-actions {
+.panel-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.coord-export-actions,
+.btn-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-start;
   margin-bottom: 0.75rem;
 }
 
