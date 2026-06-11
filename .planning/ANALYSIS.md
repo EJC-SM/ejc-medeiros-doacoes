@@ -53,8 +53,13 @@ config/
   itens, cats, equipes1, equipes2, recado1, recado2
   nome_evento, versiculo, versiculo_ref
   pix_chave, pix_qr, logo, etapa_locked
-  senha_coord, senha_dir
+auth/                    # bloqueado no client (database.rules.json)
+  senha_coord, senha_dir → { hash, updatedAt }  # PBKDF2-SHA256
+  salts                  → { coord, dir }
+  meta                   → { initialSetupComplete, algo, iterations, ... }
 ```
+
+> Campos legados `config/senha_coord` / `config/senha_dir` (texto plano) são removidos no setup inicial.
 
 ### Tipo `Doacao`
 
@@ -117,10 +122,11 @@ config/
 ## 6. Segurança (resumo)
 
 - Config Firebase via `/api/runtime-config` (sem hardcode no bundle).
-- Login admin server-side (`POST /api/auth`).
-- Mutações sensíveis exigem sessão (`x-admin-session`) ou `x-admin-token`.
+- Auth: setup inicial único (`AUTH_SETUP_TOKEN`) + login challenge-response (PBKDF2, senha nunca na rede).
+- Hashes em `auth/` (nó bloqueado no client); sessão via `x-admin-session`.
+- Mutações sensíveis exigem sessão ou `x-admin-token`.
 - Sanitização client + server; CSV com escape anti–formula injection.
-- `database.rules.json`: leitura pública controlada, **escrita bloqueada no client**.
+- `database.rules.json`: leitura pública controlada, **escrita bloqueada no client**, `auth/` ilegível.
 
 Detalhes: [SECURITY.md](./SECURITY.md).
 

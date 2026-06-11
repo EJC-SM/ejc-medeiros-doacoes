@@ -16,6 +16,10 @@
     "config": {
       ".read": true,
       ".write": false
+    },
+    "auth": {
+      ".read": false,
+      ".write": false
     }
   }
 }

@@ -115,7 +115,12 @@ Preferir sempre a API em produção.
 |---------|------|
 | `health.js` | GET `/api/health` |
 | `runtime-config.js` | GET `/api/runtime-config` |
-| `auth.js` | POST `/api/auth` |
+| `auth/status.js` | GET `/api/auth/status` |
+| `auth/challenge.js` | GET `/api/auth/challenge` |
+| `auth/initial-setup.js` | POST `/api/auth/initial-setup` |
+| `auth.js` | POST `/api/auth` (login) |
+| `password.js` | Lógica PBKDF2, challenge, setup (shared) |
+| `auth-store.js` | Leitura/escrita do nó `auth/` no Firebase |
 | `doacoes.js` | GET/POST/PUT `/api/doacoes` |
 | `config.js` | GET/PUT `/api/config` |
 | `admin.js` | POST `/api/admin` |
@@ -131,14 +136,46 @@ Contrato completo: [API-SPEC.md](./API-SPEC.md).
 
 ## 7. Autenticação
 
-1. Painel chama `loginApi(role, password)` → `POST /api/auth`.
-2. Token salvo em `sessionStorage` (`ejc_admin_session`).
-3. Mutações admin enviam `x-admin-session`.
-4. Logout coordenador limpa também `ejc_banco_unlock` e sessão embarcada do dirigente.
-5. Banco/Dirigente embarcado usam tokens auxiliares (`ejc_banco_dir_token`, `ejc_embedded_dir_token`) para PUT `/api/config` e POST `/api/admin` sem derrubar a sessão do coordenador.
+### Boot (`src/main.ts`)
+
+1. `fetchAuthSetupStatus()` → `GET /api/auth/status`
+2. Se `initialSetupComplete === false` → `mountInitialSetup()` (`src/components/auth-setup/initial-setup.ts`) bloqueia o app
+3. Após setup → `bootMain()` monta header, formulário e painéis
+
+### Setup inicial (uma vez por ambiente)
+
+- UI: token `AUTH_SETUP_TOKEN` + senhas Coordenador/Dirigente (mín. 8 chars)
+- `hashForStorage()` em `src/utils/password-auth.ts` deriva PBKDF2 no browser
+- `initialSetupApi()` → `POST /api/auth/initial-setup` com `{ coordHash, dirHash }` + header `x-setup-token`
+- Backend (`api/password.js`) grava em `auth/`, remove `senha_*` legados de `config/`
+
+### Login (challenge-response)
+
+1. `fetchAuthChallenge(role)` → `GET /api/auth/challenge?role=...`
+2. `buildLoginProof(password, challenge)` → PBKDF2 + HMAC → `{ proof, nonce }`
+3. `POST /api/auth` com `{ role, proof, nonce }` — senha **nunca** no body
+4. Token salvo em `sessionStorage` (`ejc_admin_session`)
+5. Mutações admin enviam `x-admin-session` via `adminAuthHeaders()` (`src/utils/auth.ts`)
+
+### Sessões em camadas
+
+| Contexto | Token / flag |
+|----------|----------------|
+| Coordenador logado | `ejc_admin_session` |
+| Banco desbloqueado | `ejc_banco_dir_token` + `ejc_banco_unlock` |
+| Dirigente embarcado | `ejc_embedded_dir_token` |
+
+Logout coordenador limpa também `ejc_banco_unlock` e sessão embarcada do dirigente.
+
+### Troca rotineira de senha
+
+- Accordion **Senhas e segurança** (`src/components/painel-dirigente/sections/sec-senhas.ts`)
+- Requer sessão dirigente → `changePasswordApi()` com `passwordHash` only
 
 **Coordenador** pode marcar entregas, editar recado e exportar.  
 **Dirigente** (sub-aba ou desbloqueio do banco) altera config e ações em `/api/admin`.
+
+Arquivos-chave: `src/utils/password-auth.ts`, `src/utils/login-gate.ts`, `api/password.js`, `api/auth-store.js`.
 
 ---
 
@@ -199,10 +236,12 @@ Husky executa `npm run check` em cada commit.
 
 ## 12. Testes manuais sugeridos
 
+- [ ] Setup inicial (se `initialSetupComplete === false`): token + senhas, app carrega após conclusão
 - [ ] Registrar doação na etapa 1 e 2
 - [ ] Login coordenador → sub-aba Doações: filtrar, stats, marcar entrega, recado, export CSV + backup 3 seções
 - [ ] Sub-aba Banco: desbloquear com senha dirigente → CRUD item/categoria, meta, visível/oculto
-- [ ] Sub-aba Dirigente: travas, Pix/logo (drag-drop), equipes 1ª e 2ª etapa, reset
+- [ ] Sub-aba Dirigente: travas, Pix/logo (drag-drop), equipes 1ª e 2ª etapa, reset, troca de senha
+- [ ] Network tab: login e troca de senha sem campo `password` literal
 - [ ] Tentar registrar doação com etapa travada (deve bloquear)
 - [ ] Logout coord e verificar painéis protegidos
 

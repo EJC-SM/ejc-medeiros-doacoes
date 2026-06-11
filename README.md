@@ -36,7 +36,7 @@ Abra `http://localhost:5173`.
 | **Coordenador** | Senha | Listar, filtrar, marcar entregas, exportar CSV |
 | **Dirigente** | Senha | Itens, equipes, recado, branding, Pix, travas, reset |
 
-Senhas padrão (altere após deploy): ver [DEPLOYMENT.md](.planning/DEPLOYMENT.md#senhas-iniciais).
+**Autenticação:** no primeiro deploy, o app exige **setup inicial de senhas** (PBKDF2 + challenge-response — senha literal nunca trafega na rede). Ver [DEPLOYMENT.md §5](.planning/DEPLOYMENT.md#51-setup-inicial-de-senhas-obrigatório-no-primeiro-deploy).
 
 ---
 

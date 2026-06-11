@@ -1,6 +1,7 @@
 import './styles/variables.css';
 import './styles/a11y.css';
 import './styles/global.css';
+import { mountInitialSetup } from './components/auth-setup/initial-setup';
 import { refreshFormDoacao, renderFormDoacao } from './components/form-doacao/form-doacao';
 import {
   onHeaderEtapaChange,
@@ -12,10 +13,9 @@ import {
   refreshPainelCoordenador,
   renderPainelCoordenador,
 } from './components/painel-coordenador/painel-coordenador';
-import { hydrateAllFromApi } from './state/api';
+import { fetchAuthSetupStatus, hydrateAllFromApi } from './state/api';
+import './components/auth-setup/initial-setup.css';
 import { initFirebaseGateway } from './state/firebase';
-import { getEtapaAtual } from './state/store';
-import type { Etapa } from './state/types';
 import { initWebVitals } from './utils/web-vitals';
 
 type ViewKey = 'publico' | 'coordenador';
@@ -59,9 +59,7 @@ function refreshAllViews(): void {
   refreshPainelCoordenador();
 }
 
-function boot(): void {
-  initWebVitals();
-
+function bootMain(): void {
   const app = document.getElementById('app');
   if (!app) return;
 
@@ -112,49 +110,34 @@ function boot(): void {
   tabCoord.onclick = () => setActiveView(root, 'coordenador');
   setActiveView(root, 'publico');
 
-  const info = document.createElement('p');
-  info.className = 'status-line';
-  info.textContent = `Etapa ativa: ${getEtapaAtual()}a etapa`;
-  root.appendChild(info);
-
-  onHeaderEtapaChange((etapa: Etapa) => {
-    info.textContent = `Etapa ativa: ${etapa}a etapa`;
+  onHeaderEtapaChange(() => {
     void hydrateAllFromApi().then(() => {
       refreshAllViews();
     });
   });
 
-  void Promise.all([initFirebaseGateway(), fetch('/api/health', { cache: 'no-store' }).then((r) => r.json())])
-    .then(([firebaseOk, health]) => {
-      const storage = (health as { storage?: string })?.storage;
-      const status = document.createElement('p');
-      const remoteApi = storage === 'firebase';
-
-      if (remoteApi) {
-        status.className = 'status-line status-ok';
-        status.textContent = 'Desenvolvimento conectado ao Firebase de producao (via API).';
-      } else if (firebaseOk) {
-        status.className = 'status-line status-ok';
-        status.textContent = 'Sincronizacao online ativa.';
-      } else {
-        status.className = 'status-line status-warn';
-        status.textContent =
-          'Modo memoria local — preencha FIREBASE_* no .env para gravar no banco de producao.';
-      }
-      root.appendChild(status);
-    })
-    .catch(() => {
-      const status = document.createElement('p');
-      status.className = 'status-line status-warn';
-      status.textContent = 'API local indisponivel.';
-      root.appendChild(status);
-    });
+  void initFirebaseGateway();
 
   refreshAllViews();
 
   void hydrateAllFromApi().then(() => {
     refreshAllViews();
   });
+}
+
+async function boot(): Promise<void> {
+  initWebVitals();
+
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const status = await fetchAuthSetupStatus();
+  if (status && !status.initialSetupComplete) {
+    mountInitialSetup(app, status, () => bootMain());
+    return;
+  }
+
+  bootMain();
 }
 
 boot();

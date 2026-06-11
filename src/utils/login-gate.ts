@@ -46,6 +46,8 @@ export function renderLoginGate(options: LoginGateOptions): HTMLElement {
   const attempt = async (): Promise<void> => {
     error.hidden = true;
     submit.disabled = true;
+    const previousLabel = submit.textContent;
+    submit.textContent = 'Autenticando...';
     const login =
       options.loginFn ??
       (async (password: string) => {
@@ -54,8 +56,9 @@ export function renderLoginGate(options: LoginGateOptions): HTMLElement {
       });
     const result = await login(input.value);
     submit.disabled = false;
+    submit.textContent = previousLabel || 'Entrar';
     if (!result.ok) {
-      error.textContent = result.message || 'Senha incorreta.';
+      error.textContent = result.message || 'Credenciais invalidas.';
       error.hidden = false;
       return;
     }

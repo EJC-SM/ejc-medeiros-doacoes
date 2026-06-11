@@ -93,11 +93,15 @@ src/
 ## ⏰ Lembretes Pendentes (Bloqueios Atuais)
 
 1. **Vercel ENV pendente**
-- Definir na Vercel as variáveis `FIREBASE_*`, `ADMIN_API_TOKEN` e `SESSION_SECRET`.
+- Definir na Vercel: `FIREBASE_*`, `FIREBASE_DATABASE_SECRET`, `ADMIN_API_TOKEN`, `SESSION_SECRET` e **`AUTH_SETUP_TOKEN`**.
 - Enquanto não houver acesso à Vercel, usar `.env` local para testes.
 
 2. **Publicar Firebase Rules**
-- Aplicar `database.rules.json` no Firebase Console (arquivo criado no repo).
+- Aplicar `database.rules.json` no Firebase Console (incluir bloco `auth` read/write false).
+
+3. **Setup inicial de senhas**
+- Após deploy, concluir setup uma vez por ambiente (Preview e Production separados).
+- Ver [DEPLOYMENT.md §5.1](./DEPLOYMENT.md#51-setup-inicial-de-senhas-obrigatório-no-primeiro-deploy).
 
 ### **Phase 2: TypeScript + Validação** (1-2 dias)
 - [x] Converter base do formulário para TS funcional
@@ -161,7 +165,7 @@ src/
 | Backend | Firebase | Já em uso, realtime, sincronização perfeita |
 | Database | Firebase Realtime Database | Realtime, schema legado preservado |
 | Deployment | Vercel | Atual, zero-downtime, próximo de Brasil |
-| Auth | Current (senha) | Melhorar validação, sem 2FA agora |
+| Auth | PBKDF2 + challenge-response | Senha nunca na rede; setup único com `AUTH_SETUP_TOKEN` |
 | Storage | localStorage + Firebase | Offline-first + sync |
 
 ---
@@ -189,8 +193,9 @@ src/
 4. [ ] Rodar auditoria manual WCAG completa (teclado + leitor de tela)
 5. [ ] Medir Web Vitals reais em produção
 6. [ ] Publicar Firebase Rules + ENV Vercel (ver DEPLOYMENT.md)
-7. [ ] Rotacionar senhas padrão após primeiro deploy
-8. [ ] Backlog opcional: banco de dados avançado, gráfico por equipe, CI GitHub Actions
+7. [ ] Executar setup inicial de senhas em Preview e Production
+8. [x] Refatorar auth: PBKDF2 + challenge-response + setup único (jun/2026)
+9. [ ] Backlog opcional: banco de dados avançado, gráfico por equipe, CI GitHub Actions
 
 ---
 
@@ -230,4 +235,4 @@ Antes de começar Phase 0, confirme:
 ---
 
 **Prepared by**: Claude (GitHub Copilot)  
-**Last Updated**: 8 junho 2026 (Fase 5 concluída)
+**Last Updated**: 9 junho 2026 (auth PBKDF2 + challenge-response)

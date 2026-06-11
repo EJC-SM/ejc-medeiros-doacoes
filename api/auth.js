@@ -1,28 +1,11 @@
-const crypto = require('node:crypto');
+const { applySecurityHeaders, isRateLimited, createAdminSession, sanitizeText } = require('./_firebase');
 const {
-  dbGet,
-  applySecurityHeaders,
-  isRateLimited,
-  createAdminSession,
-  sanitizeText,
-} = require('./_firebase');
-
-const DEFAULT_SENHA_COORD = 'ejcdoacoes2025';
-const DEFAULT_SENHA_DIR = 'Senh@ejc123!*';
-
-async function resolvePassword(role) {
-  const cfg = (await dbGet('config')) || {};
-  if (role === 'coordenador') return cfg.senha_coord || DEFAULT_SENHA_COORD;
-  if (role === 'dirigente') return cfg.senha_dir || DEFAULT_SENHA_DIR;
-  return null;
-}
-
-function safeCompare(a, b) {
-  const left = Buffer.from(String(a));
-  const right = Buffer.from(String(b));
-  if (left.length !== right.length) return false;
-  return crypto.timingSafeEqual(left, right);
-}
+  validateRole,
+  verifyProof,
+  consumeChallenge,
+  getStoredPasswordHash,
+  getAuthStatus,
+} = require('./password');
 
 module.exports = async function handler(req, res) {
   try {
@@ -38,18 +21,28 @@ module.exports = async function handler(req, res) {
     }
 
     const role = sanitizeText(req.body?.role, 20);
-    const password = String(req.body?.password || '');
+    const proof = sanitizeText(req.body?.proof, 128);
+    const nonce = sanitizeText(req.body?.nonce, 64);
 
-    if (role !== 'coordenador' && role !== 'dirigente') {
+    if (!validateRole(role)) {
       return res.status(400).json({ error: 'invalid_role' });
     }
-    if (!password) {
-      return res.status(400).json({ error: 'password_required' });
+    if (!proof || !nonce) {
+      return res.status(400).json({ error: 'proof_required' });
     }
 
-    const expected = await resolvePassword(role);
-    if (!expected || !safeCompare(password, expected)) {
-      return res.status(401).json({ error: 'Senha incorreta.' });
+    const status = await getAuthStatus();
+    if (!status.initialSetupComplete) {
+      return res.status(503).json({ error: 'setup_required' });
+    }
+
+    if (!consumeChallenge(nonce, role)) {
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
+    }
+
+    const storedHash = await getStoredPasswordHash(role);
+    if (!storedHash || !verifyProof(storedHash, nonce, proof)) {
+      return res.status(401).json({ error: 'Credenciais inválidas.' });
     }
 
     const session = createAdminSession(role);

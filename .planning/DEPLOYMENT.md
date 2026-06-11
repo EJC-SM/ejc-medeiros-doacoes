@@ -25,6 +25,7 @@ Deploy recomendado: **Vercel** (frontend + API) + **Firebase Realtime Database**
 Publique o conteúdo de `database.rules.json` na aba **Regras** do Realtime Database:
 
 - Leitura pública em `doacoes/*` e `config/*` (somente leitura)
+- **`auth/` bloqueado** (read/write false) — hashes PBKDF2 das senhas administrativas
 - **Escrita bloqueada no client** — mutações via API server-side
 
 ```bash
@@ -57,10 +58,13 @@ Configure em **Project Settings → Environment Variables**:
 | `FIREBASE_MESSAGING_SENDER_ID` | Sim | Sender ID |
 | `FIREBASE_APP_ID` | Sim | App ID |
 | `FIREBASE_DATABASE_SECRET` | Sim (prod) | Auth REST server-side |
-| `ADMIN_API_TOKEN` | Recomendado | Token fixo para mutações admin |
-| `SESSION_SECRET` | Recomendado | Assinatura de sessão (fallback) |
+| `ADMIN_API_TOKEN` | Sim | Token fixo para mutações admin |
+| `SESSION_SECRET` | Recomendado | Assinatura de sessão (`x-admin-session`) |
+| `AUTH_SETUP_TOKEN` | Sim (até setup) | Token de uso único para setup inicial de senhas |
 
 Referência local: `.env.example`
+
+> **Importante:** `AUTH_SETUP_TOKEN` deve ser uma string longa e aleatória, distinta de `ADMIN_API_TOKEN`. Guarde em local seguro — só quem possui esse token consegue definir as senhas iniciais. Pode ser removido da Vercel após o setup concluído.
 
 ### Produção vs Preview
 
@@ -97,33 +101,69 @@ vercel --prod
 
 ## 5. Pós-deploy
 
-### Senhas iniciais
+### 5.1 Setup inicial de senhas (obrigatório no primeiro deploy)
 
-Senhas padrão (existem **apenas no backend** até serem alteradas no Firebase):
+Não existem mais senhas padrão embutidas no código. Após o deploy, o app exibe a tela **"Configuração inicial de senhas"** até que o setup seja concluído.
 
-| Papel | Senha padrão |
-|-------|----------------|
-| Coordenador | `ejcdoacoes2025` |
-| Dirigente | `Senh@ejc123!*` |
+**Pré-requisitos:**
 
-**Ações imediatas após primeiro deploy:**
+- `AUTH_SETUP_TOKEN` configurado na Vercel (Preview e/ou Production)
+- `FIREBASE_DATABASE_SECRET` ativo (escrita no nó `auth/`)
+- `database.rules.json` publicado (nó `auth/` bloqueado no client)
 
-1. Login como **Dirigente**
-2. Trocar senha do Coordenador e do Dirigente
-3. Confirmar Pix, itens e equipes
-4. Testar registro público de doação
+**Fluxo (UI):**
 
-### Publicar rules Firebase
+1. Abrir o app → tela de setup inicial (não o app normal)
+2. Informar o `AUTH_SETUP_TOKEN`
+3. Definir senha do **Coordenador** e do **Dirigente** (mín. 8 caracteres, confirmar ambas)
+4. O browser deriva hashes PBKDF2-SHA256 (210k iterações) e envia apenas `coordHash` / `dirHash` — **a senha literal nunca trafega na rede**
+5. Após sucesso, o app carrega normalmente
 
-Confirme que as rules foram aplicadas (client não deve conseguir `.write` direto).
+**Verificação:**
 
-### Smoke test
+```bash
+# Deve retornar initialSetupComplete: true
+curl https://SEU-DOMINIO/api/auth/status
+
+# Segunda tentativa de setup deve retornar 410
+curl -X POST https://SEU-DOMINIO/api/auth/initial-setup \
+  -H "Content-Type: application/json" \
+  -H "x-setup-token: SEU_TOKEN" \
+  -d '{"coordHash":"...","dirHash":"..."}'
+```
+
+**Alternativa via API (sem UI):** ver [API-SPEC.md](./API-SPEC.md#post-apiauthinitial-setup-uso-único).
+
+**Pós-setup (recomendado):**
+
+1. Remover `AUTH_SETUP_TOKEN` da Vercel (opcional — endpoint fica inutilizável sem o token)
+2. Confirmar no Firebase Console: nó `auth/` com hashes; `config/` **sem** `senha_coord` / `senha_dir`
+3. Entregar senhas às equipes responsáveis (Coordenador → casal; Dirigente → liderança)
+
+### 5.2 Migração do sistema antigo
+
+Se produção já tinha `config/senha_coord` / `config/senha_dir` (texto plano do legado), elas **não são lidas** pelo novo login. O app exibirá a tela de setup até `auth/meta.initialSetupComplete === true`. O setup inicial remove automaticamente os campos legados de `config/`.
+
+### 5.3 Troca rotineira de senhas
+
+Após o setup, o **Dirigente** troca senhas pelo painel → accordion **Senhas e segurança** (`POST /api/admin` action `change_password`). Apenas `passwordHash` é enviado — mesma política de não trafegar senha literal.
+
+### 5.4 Publicar rules Firebase
+
+Confirme que as rules foram aplicadas:
+
+- Client **não** consegue `.write` direto no DB
+- Nó `auth/` ilegível no browser
+
+### 5.5 Smoke test
 
 - [ ] `GET /api/health` retorna `{ ok: true }`
 - [ ] `GET /api/runtime-config` retorna firebase config (sem erro 500)
+- [ ] `GET /api/auth/status` → `initialSetupComplete: true` (após setup)
 - [ ] Formulário público registra doação
-- [ ] Login coordenador funciona
+- [ ] Login coordenador funciona (Network: body com `proof` + `nonce`, sem `password`)
 - [ ] Login dirigente funciona
+- [ ] Troca de senha no painel Dirigente funciona
 
 Checklist completo: [RELEASE-CHECKLIST.md](./RELEASE-CHECKLIST.md)
 
@@ -150,6 +190,9 @@ FIREBASE_PROJECT_ID=...
 FIREBASE_STORAGE_BUCKET=...
 FIREBASE_MESSAGING_SENDER_ID=...
 FIREBASE_APP_ID=...
+ADMIN_API_TOKEN=...
+SESSION_SECRET=...
+AUTH_SETUP_TOKEN=...
 ```
 
 Com `FIREBASE_DATABASE_URL` definido, a API local (`/api/*`) passa a **ler e gravar no banco real** — o mesmo usado em producao. A barra de status do app exibira: *"Desenvolvimento conectado ao Firebase de producao"*.
@@ -160,11 +203,14 @@ As variaveis `VITE_FIREBASE_*` sao opcionais; se omitidas, `/api/runtime-config`
 
 > **Atencao:** testes locais alteram dados reais. Evite reset de doacoes em producao durante testes.
 
+**Setup local:** se `auth/meta.initialSetupComplete` ainda for `false` no Firebase, o app exibe a mesma tela de setup inicial. Defina `AUTH_SETUP_TOKEN` no `.env` para concluir o setup localmente.
+
 ### Sem Firebase (memoria local)
 
 Se `FIREBASE_DATABASE_URL` nao estiver no `.env`, a API usa memoria volatil — dados somem ao reiniciar `npm run dev`:
 
-- Login com senhas padrao acima
+- Tela de setup inicial na primeira execucao (requer `AUTH_SETUP_TOKEN` no `.env`)
+- Apos setup, login via challenge-response (mesmo fluxo de producao)
 - Dados resetam ao reiniciar o servidor
 
 ---
@@ -197,7 +243,10 @@ Se `FIREBASE_DATABASE_URL` nao estiver no `.env`, a API usa memoria volatil — 
 | Problema | Causa provável | Solução |
 |----------|----------------|---------|
 | 500 em `/api/runtime-config` | ENV Firebase incompleta | Preencher todas `FIREBASE_*` |
-| Login admin falha | Senha alterada no DB | Reset via Firebase `config/senha_*` |
+| Tela de setup não sai | Setup não concluído | Concluir setup com `AUTH_SETUP_TOKEN`; verificar `GET /api/auth/status` |
+| `invalid_setup_token` | Token incorreto ou ausente | Conferir `AUTH_SETUP_TOKEN` na Vercel / `.env` |
+| Login retorna `setup_required` | Setup pendente | Concluir setup inicial antes de logar |
+| Login admin falha após setup | Senha incorreta ou nonce expirado | Tentar novamente (nonce TTL ~60s); verificar hash em `auth/senha_*` |
 | Doação não sincroniza | Rules ou secret | Verificar rules + `FIREBASE_DATABASE_SECRET` |
 | Painel vazio após deploy | Hydrate falhou | Checar Network tab em `/api/config` e `/api/doacoes` |
 | Pre-commit falha | Lint/typecheck | `npm run check` e corrigir |

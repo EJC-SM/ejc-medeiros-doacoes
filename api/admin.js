@@ -1,4 +1,3 @@
-const crypto = require('node:crypto');
 const {
   dbGet,
   dbSet,
@@ -8,8 +7,7 @@ const {
   isRateLimited,
   requireDirigenteAccess,
 } = require('./_firebase');
-
-const DEFAULT_SENHA_DIR = 'Senh@ejc123!*';
+const { setPasswordHash } = require('./password');
 
 const CATS_DEFAULT = [
   { id: 'secos', nome: '🌾 Alimentos Secos' },
@@ -42,13 +40,6 @@ const ITENS_DEFAULT = [
   { nome: 'Sabão em pó', unidade: 'kg', meta: 0, cat: 'higiene', visivel: true },
   { nome: 'Detergente', unidade: 'un', meta: 0, cat: 'higiene', visivel: true },
 ];
-
-function safeCompare(a, b) {
-  const left = Buffer.from(String(a));
-  const right = Buffer.from(String(b));
-  if (left.length !== right.length) return false;
-  return crypto.timingSafeEqual(left, right);
-}
 
 async function handleAdmin(req, res) {
   if (!requireDirigenteAccess(req)) {
@@ -87,25 +78,19 @@ async function handleAdmin(req, res) {
 
   if (action === 'change_password') {
     const role = sanitizeText(req.body?.password_role, 20);
-    const current = String(req.body?.current_password || '');
-    const next = String(req.body?.new_password || '');
+    const passwordHash = sanitizeText(req.body?.passwordHash, 128);
 
     if (role !== 'coordenador' && role !== 'dirigente') {
       return res.status(400).json({ error: 'invalid_role' });
     }
-    if (next.length < 4 || next.length > 80) {
-      return res.status(400).json({ error: 'invalid_new_password' });
+
+    const result = await setPasswordHash(role, passwordHash);
+    if (!result.ok) {
+      const status = result.error === 'setup_required' ? 503 : 400;
+      return res.status(status).json({ error: result.error });
     }
 
-    const dirPassword = cfg.senha_dir || DEFAULT_SENHA_DIR;
-    if (!safeCompare(current, dirPassword)) {
-      return res.status(401).json({ error: 'Senha do Dirigente incorreta.' });
-    }
-
-    if (role === 'coordenador') cfg.senha_coord = next;
-    if (role === 'dirigente') cfg.senha_dir = next;
-    await dbSet('config', cfg);
-    return res.status(200).json({ ok: true });
+    return res.status(200).json({ ok: true, updatedAt: result.updatedAt });
   }
 
   return res.status(400).json({ error: 'invalid_action' });

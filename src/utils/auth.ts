@@ -1,4 +1,5 @@
 import type { AuthRole } from '../state/types';
+import { buildLoginProof } from './password-auth';
 
 const SESSION_KEY = 'ejc_admin_session';
 const BANCO_UNLOCK_KEY = 'ejc_banco_unlock';
@@ -123,14 +124,19 @@ export async function loginEmbeddedDirigente(password: string): Promise<boolean>
 
 export async function loginApi(role: AuthRole, password: string): Promise<{ ok: boolean; message?: string }> {
   try {
+    const proofPayload = await buildLoginProof(role, password);
+    if ('error' in proofPayload) {
+      return { ok: false, message: proofPayload.error };
+    }
+
     const response = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ role, password }),
+      body: JSON.stringify({ role, proof: proofPayload.proof, nonce: proofPayload.nonce }),
     });
     const data = (await response.json()) as { token?: string; expiresAt?: number; error?: string };
     if (!response.ok || !data.token || !data.expiresAt) {
-      return { ok: false, message: data.error || 'Senha incorreta.' };
+      return { ok: false, message: data.error || 'Credenciais inválidas.' };
     }
     writeSession({ role, token: data.token, expiresAt: data.expiresAt });
     return { ok: true };

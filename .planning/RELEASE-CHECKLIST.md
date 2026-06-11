@@ -19,6 +19,7 @@ Use este checklist antes de cada deploy em produção (especialmente antes do ev
 - [ ] `FIREBASE_DATABASE_URL` correto
 - [ ] `FIREBASE_DATABASE_SECRET` configurado
 - [ ] `ADMIN_API_TOKEN` definido (string longa aleatória)
+- [ ] `AUTH_SETUP_TOKEN` definido (Preview + Production, até concluir setup)
 - [ ] `SESSION_SECRET` definido (se não usar só ADMIN_API_TOKEN)
 
 ---
@@ -33,11 +34,21 @@ Use este checklist antes de cada deploy em produção (especialmente antes do ev
 
 ## Segurança
 
-- [ ] Senhas padrão **alteradas** (coord + dirigente)
+- [ ] Setup inicial de senhas concluído (`GET /api/auth/status` → `initialSetupComplete: true`)
+- [ ] Segundo POST `/api/auth/initial-setup` retorna **410**
+- [ ] Network: login e troca de senha **sem** campo `password` literal
+- [ ] Nó `auth/` ilegível no browser; `config/` sem `senha_*`
 - [ ] `.env` não commitado
-- [ ] `ADMIN_API_TOKEN` não exposto no frontend
+- [ ] `ADMIN_API_TOKEN` e `AUTH_SETUP_TOKEN` não expostos no frontend
 
 ---
+
+## Setup inicial (primeiro deploy por ambiente)
+
+- [ ] App exibe tela **Configuração inicial de senhas** (se `initialSetupComplete === false`)
+- [ ] Setup concluído com `AUTH_SETUP_TOKEN` válido
+- [ ] Após setup, app carrega normalmente (formulário público visível)
+- [ ] `GET /api/auth/status` → `initialSetupComplete: true`, `coordConfigured` e `dirConfigured` true
 
 ## Smoke test em preview/production
 
@@ -47,9 +58,10 @@ Use este checklist antes de cada deploy em produção (especialmente antes do ev
 - [ ] Alternar etapa 1 ↔ 2 no header
 - [ ] Registrar doação pública
 - [ ] Recado / Pix / versículo visíveis (se configurados)
-- [ ] Login **Coordenador** → listagem + export CSV
+- [ ] Login **Coordenador** (challenge-response, sem `password` no body) → listagem + export CSV
 - [ ] Marcar / remover entrega
 - [ ] Login **Dirigente** → adicionar item + salvar recado
+- [ ] Troca de senha no accordion **Senhas e segurança** (dirigente)
 - [ ] Travar etapa → formulário público bloqueia etapa errada
 - [ ] Logout funciona nos painéis
 

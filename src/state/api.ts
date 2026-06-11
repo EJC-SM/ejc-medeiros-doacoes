@@ -61,8 +61,21 @@ interface AdminActionInput {
   action: 'reset_doacoes' | 'reset_itens' | 'lock_etapa' | 'change_password';
   lock_etapa?: 0 | Etapa;
   password_role?: AuthRole;
-  new_password?: string;
-  current_password?: string;
+  passwordHash?: string;
+}
+
+export interface AuthSetupStatus {
+  initialSetupComplete: boolean;
+  coordConfigured: boolean;
+  dirConfigured: boolean;
+  coordUpdatedAt: string | null;
+  dirUpdatedAt: string | null;
+  iterations: number;
+  algo: string;
+  salts?: {
+    coord: string;
+    dir: string;
+  };
 }
 
 async function requestJson<T>(input: RequestInfo, init?: RequestInit): Promise<T | null> {
@@ -254,8 +267,7 @@ export async function resetItensApi(etapa: Etapa, authOverride?: Record<string, 
 
 export async function changePasswordApi(
   role: AuthRole,
-  currentPassword: string,
-  newPassword: string,
+  passwordHash: string,
   authOverride?: Record<string, string>,
 ): Promise<boolean> {
   return adminActionApi(
@@ -263,11 +275,42 @@ export async function changePasswordApi(
       etapa: getEtapaAtual(),
       action: 'change_password',
       password_role: role,
-      current_password: currentPassword,
-      new_password: newPassword,
+      passwordHash,
     },
     authOverride,
   );
+}
+
+export async function fetchAuthSetupStatus(): Promise<AuthSetupStatus | null> {
+  try {
+    const response = await fetch('/api/auth/status', { method: 'GET', cache: 'no-store' });
+    if (!response.ok) return null;
+    return (await response.json()) as AuthSetupStatus;
+  } catch {
+    return null;
+  }
+}
+
+export async function initialSetupApi(
+  coordHash: string,
+  dirHash: string,
+  setupToken: string,
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const response = await fetch('/api/auth/initial-setup', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-setup-token': setupToken,
+      },
+      body: JSON.stringify({ coordHash, dirHash }),
+    });
+    const data = (await response.json()) as { ok?: boolean; error?: string };
+    if (!response.ok) return { ok: false, error: data.error || 'setup_failed' };
+    return { ok: Boolean(data.ok) };
+  } catch {
+    return { ok: false, error: 'network_error' };
+  }
 }
 
 export type { AppConfig };

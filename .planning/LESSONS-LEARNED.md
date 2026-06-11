@@ -36,13 +36,20 @@ Decisões, trade-offs e aprendizados do refactor EJC Medeiros Doações (Fases 0
 
 ## 4. Autenticação por senha (sem Firebase Auth)
 
-**Decisão:** Senhas em `config/senha_*`, verificação em `POST /api/auth`, sessão HMAC.
+**Decisão (atualizada jun/2026):** Hashes PBKDF2-SHA256 em `auth/senha_coord` e `auth/senha_dir`; login challenge-response; setup inicial único com `AUTH_SETUP_TOKEN`.
 
-**Por quê:** Paridade com legado, simplicidade operacional no curto prazo.
+**Por quê:** Paridade com legado sem Firebase Auth; senha literal nunca trafega na rede; hashes ilegíveis no client (nó `auth/` bloqueado nas rules).
 
-**Trade-off:** Senhas ainda em texto no DB até migração para hash. **Rotacionar imediatamente após deploy.**
+**Fluxo resumido:**
 
-**Próximo passo recomendado:** bcrypt/argon2 no backend + Firebase Auth se escala exigir.
+1. Primeiro deploy → tela de setup (`POST /api/auth/initial-setup` + `x-setup-token`)
+2. Login → `GET /api/auth/challenge` → browser deriva chave + `proof` HMAC → `POST /api/auth`
+3. Troca rotineira → painel Dirigente, accordion **Senhas e segurança** (`change_password` com `passwordHash` only)
+4. Sessão admin via `x-admin-session` (HMAC com `ADMIN_API_TOKEN` / `SESSION_SECRET`)
+
+**Trade-off:** Sem 2FA; rate limit em memória (serverless). Setup inicial exige guardar `AUTH_SETUP_TOKEN` com cuidado até concluir.
+
+**Legado removido:** `config/senha_coord` / `config/senha_dir` em texto plano — migrados para `auth/` no setup e apagados de `config/`.
 
 ---
 
@@ -108,9 +115,9 @@ Decisões, trade-offs e aprendizados do refactor EJC Medeiros Doações (Fases 0
 
 ## 11. O que faríamos diferente
 
-1. **Hash de senhas desde o início** — evitaria débito de segurança.
+1. ~~**Hash de senhas desde o início**~~ — implementado (PBKDF2 + challenge-response, jun/2026).
 2. **Firebase listeners tipados** — refresh manual funciona, mas realtime UX seria mais fluida.
-3. **Testes E2E mínimos** — Playwright em fluxo de doação + login reduziria regressões.
+3. **Testes E2E mínimos** — Playwright em fluxo de doação + login + setup inicial reduziria regressões.
 4. **CI na Vercel/GitHub Actions** — rodar `npm run check && npm run build` em PR.
 
 ---
@@ -132,5 +139,5 @@ Decisões, trade-offs e aprendizados do refactor EJC Medeiros Doações (Fases 0
 | TypeScript 0 errors | ✅ |
 | Modularidade | ✅ |
 | WCAG baseline | ✅ (auditoria manual pendente) |
-| Security deep-dive | ✅ (operacionalização ENV/rules pendente) |
+| Security deep-dive | ✅ (auth PBKDF2; operacionalização ENV/rules/setup pendente) |
 | DX / documentação | ✅ Fase 5 |

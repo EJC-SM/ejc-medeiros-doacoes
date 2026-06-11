@@ -16,6 +16,7 @@ function applyServerEnv(mode: string): void {
     'FIREBASE_APP_ID',
     'ADMIN_API_TOKEN',
     'SESSION_SECRET',
+    'AUTH_SETUP_TOKEN',
   ];
 
   for (const key of keys) {

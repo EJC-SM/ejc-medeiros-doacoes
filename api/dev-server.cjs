@@ -1,9 +1,8 @@
 const crypto = require('node:crypto');
 const { parse: parseUrl } = require('node:url');
 const { dbGet, dbSet, getClientFirebaseConfig, hasFirebaseConfig } = require('./firebase-rest.cjs');
-
-const DEFAULT_SENHA_COORD = 'ejcdoacoes2025';
-const DEFAULT_SENHA_DIR = 'Senh@ejc123!*';
+const { useMemoryAuthStore } = require('./auth-store');
+const password = require('./password');
 
 const CATS_DEFAULT = [
   { id: 'secos', nome: '🌾 Alimentos Secos' },
@@ -101,9 +100,8 @@ function ensureMemoryState() {
         pix_qr: '',
         logo: '',
         etapa_locked: 0,
-        senha_coord: DEFAULT_SENHA_COORD,
-        senha_dir: DEFAULT_SENHA_DIR,
       },
+      auth: {},
       doacoes: { 1: {}, 2: {} },
       sessions: new Map(),
     };
@@ -216,15 +214,12 @@ async function saveDoacoesMap(remote, etapa, raw) {
   return raw;
 }
 
-async function resolvePassword(remote, role, cfg) {
-  if (role === 'coordenador') return cfg.senha_coord || DEFAULT_SENHA_COORD;
-  if (role === 'dirigente') return cfg.senha_dir || DEFAULT_SENHA_DIR;
-  return '';
-}
-
 function createDevApiMiddleware() {
   const remote = hasFirebaseConfig();
   const memory = ensureMemoryState();
+  if (!remote) {
+    useMemoryAuthStore(memory);
+  }
 
   if (remote) {
     console.log(
@@ -263,14 +258,54 @@ function createDevApiMiddleware() {
         return json(res, 200, { firebase, remote: remote });
       }
 
+      if (url.pathname === '/api/auth/challenge' && req.method === 'GET') {
+        const role = sanitizeText(url.query?.role, 20);
+        if (!password.validateRole(role)) return json(res, 400, { error: 'invalid_role' });
+        const params = await password.getPublicAuthParams(role);
+        const nonce = password.issueChallenge(role);
+        return json(res, 200, {
+          nonce,
+          salt: params.salt,
+          iterations: params.iterations,
+          algo: params.algo,
+          expiresAt: new Date(Date.now() + 60_000).toISOString(),
+        });
+      }
+
+      if (url.pathname === '/api/auth/status' && req.method === 'GET') {
+        const status = await password.getAuthStatus();
+        const setupParams = status.initialSetupComplete ? null : await password.getSetupPublicParams();
+        return json(res, 200, {
+          ...status,
+          ...(setupParams ? { salts: setupParams.salts } : {}),
+        });
+      }
+
+      if (url.pathname === '/api/auth/initial-setup' && req.method === 'POST') {
+        if (!password.verifySetupToken(req)) return json(res, 401, { error: 'invalid_setup_token' });
+        const body = await readBody(req);
+        const coordHash = sanitizeText(body?.coordHash, 128);
+        const dirHash = sanitizeText(body?.dirHash, 128);
+        const result = await password.completeInitialSetup(coordHash, dirHash);
+        if (!result.ok) return json(res, result.status || 400, { error: result.error });
+        return json(res, 200, { ok: true, message: 'initial_setup_complete' });
+      }
+
       if (url.pathname === '/api/auth' && req.method === 'POST') {
         const body = await readBody(req);
         const role = sanitizeText(body?.role, 20);
-        const password = String(body?.password || '');
-        const cfg = await loadConfig(remote);
-        const expected = await resolvePassword(remote, role, cfg);
-        if (!expected || password !== expected) {
-          return json(res, 401, { error: 'Senha incorreta.' });
+        const proof = sanitizeText(body?.proof, 128);
+        const nonce = sanitizeText(body?.nonce, 64);
+        if (!password.validateRole(role)) return json(res, 400, { error: 'invalid_role' });
+        if (!proof || !nonce) return json(res, 400, { error: 'proof_required' });
+        const status = await password.getAuthStatus();
+        if (!status.initialSetupComplete) return json(res, 503, { error: 'setup_required' });
+        if (!password.consumeChallenge(nonce, role)) {
+          return json(res, 401, { error: 'Credenciais inválidas.' });
+        }
+        const storedHash = await password.getStoredPasswordHash(role);
+        if (!storedHash || !password.verifyProof(storedHash, nonce, proof)) {
+          return json(res, 401, { error: 'Credenciais inválidas.' });
         }
         const session = createSession(role, memory.sessions);
         return json(res, 200, { token: session.token, expiresAt: session.expiresAt });
@@ -412,16 +447,16 @@ function createDevApiMiddleware() {
         }
         if (action === 'change_password') {
           const role = sanitizeText(body?.password_role, 20);
-          const current = String(body?.current_password || '');
-          const next = String(body?.new_password || '');
-          if (next.length < 4) return json(res, 400, { error: 'invalid_new_password' });
-          if (current !== (cfg.senha_dir || DEFAULT_SENHA_DIR)) {
-            return json(res, 401, { error: 'Senha do Dirigente incorreta.' });
+          const passwordHash = sanitizeText(body?.passwordHash, 128);
+          if (role !== 'coordenador' && role !== 'dirigente') {
+            return json(res, 400, { error: 'invalid_role' });
           }
-          if (role === 'coordenador') cfg.senha_coord = next;
-          if (role === 'dirigente') cfg.senha_dir = next;
-          await saveConfig(remote, cfg);
-          return json(res, 200, { ok: true });
+          const result = await password.setPasswordHash(role, passwordHash);
+          if (!result.ok) {
+            const status = result.error === 'setup_required' ? 503 : 400;
+            return json(res, status, { error: result.error });
+          }
+          return json(res, 200, { ok: true, updatedAt: result.updatedAt });
         }
         return json(res, 400, { error: 'invalid_action' });
       }

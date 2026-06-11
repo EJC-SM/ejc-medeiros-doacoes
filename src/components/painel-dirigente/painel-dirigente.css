@@ -69,6 +69,78 @@
   color: var(--brand);
 }
 
+.dir-embedded-root .dir-accordion:first-of-type {
+  margin-top: 0;
+}
+
+.dir-accordion {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: 0.75rem 0;
+  background: var(--surface);
+}
+
+.dir-accordion > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  list-style: none;
+}
+
+.dir-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dir-accordion-body {
+  padding: 0 1rem 1rem;
+}
+
+.dir-sub-accordion {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.dir-sub-accordion > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+}
+
+.dir-subtitle {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.dir-password-intro {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.dir-password-form {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f8fafc;
+}
+
+.dir-password-form h4 {
+  margin: 0 0 0.35rem;
+}
+
+.dir-password-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
+.dir-password-form input[type="password"] {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
 .dir-embedded-root .dir-section:first-of-type {
   border-top: 0;
   padding-top: 0;

@@ -1,12 +1,6 @@
 import template from './painel-dirigente.html?raw';
 import './painel-dirigente.css';
-import {
-  changePasswordApi,
-  lockEtapaApi,
-  resetDoacoesApi,
-  resetItensApi,
-  updateConfigApi,
-} from '../../state/api';
+import { lockEtapaApi, resetDoacoesApi, resetItensApi, updateConfigApi } from '../../state/api';
 import { isFirebaseReady, syncConfigValue } from '../../state/firebase';
 import {
   applyAppConfig,
@@ -25,7 +19,7 @@ import {
   setPixChave,
   setPixQr,
 } from '../../state/store';
-import type { AuthRole, Etapa } from '../../state/types';
+import type { Etapa } from '../../state/types';
 import {
   getEmbeddedDirigenteAuthHeaders,
   isEmbeddedDirigenteLogged,
@@ -38,6 +32,7 @@ import { validateNome } from '../../utils/validation';
 import { refreshFormDoacao } from '../form-doacao/form-doacao';
 import { refreshHeader } from '../header/header';
 import { refreshPainelCoordenador } from '../painel-coordenador/painel-coordenador';
+import { mountSecSenhas } from './sections/sec-senhas';
 
 export interface DirigentePanelOptions {
   embedded?: boolean;
@@ -174,67 +169,6 @@ function renderLockButtons(root: HTMLElement): void {
   const b2 = root.querySelector<HTMLButtonElement>('#dir-trava-2');
   if (b1) b1.textContent = locked === 1 ? '1a Etapa (travada)' : 'Travar 1a Etapa';
   if (b2) b2.textContent = locked === 2 ? '2a Etapa (travada)' : 'Travar 2a Etapa';
-}
-
-function openPasswordModal(root: HTMLElement, role: AuthRole): void {
-  const host = root.querySelector<HTMLElement>('#dir-modal-host');
-  if (!host) return;
-
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-overlay open';
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-
-  const modal = document.createElement('section');
-  modal.className = 'modal-card';
-  modal.innerHTML = `
-    <h3>Trocar senha ${role === 'coordenador' ? 'do Coordenador' : 'do Dirigente'}</h3>
-    <label for="dir-pass-current">Senha atual do Dirigente</label>
-    <input id="dir-pass-current" type="password" maxlength="80" />
-    <label for="dir-pass-new">Nova senha</label>
-    <input id="dir-pass-new" type="password" maxlength="80" />
-    <label for="dir-pass-confirm">Confirmar nova senha</label>
-    <input id="dir-pass-confirm" type="password" maxlength="80" />
-    <p id="dir-pass-error" class="dir-err" hidden></p>
-    <div class="dir-actions">
-      <button type="button" id="dir-pass-save">Salvar</button>
-      <button type="button" id="dir-pass-cancel">Cancelar</button>
-    </div>
-  `;
-
-  overlay.appendChild(modal);
-  host.replaceChildren(overlay);
-
-  const close = (): void => host.replaceChildren();
-
-  modal.querySelector('#dir-pass-cancel')?.addEventListener('click', close);
-  modal.querySelector('#dir-pass-save')?.addEventListener('click', async () => {
-    const current = (modal.querySelector('#dir-pass-current') as HTMLInputElement).value;
-    const next = (modal.querySelector('#dir-pass-new') as HTMLInputElement).value;
-    const confirm = (modal.querySelector('#dir-pass-confirm') as HTMLInputElement).value;
-    const error = modal.querySelector<HTMLElement>('#dir-pass-error');
-    if (!error) return;
-
-    if (next.length < 4) {
-      error.textContent = 'A nova senha deve ter ao menos 4 caracteres.';
-      error.hidden = false;
-      return;
-    }
-    if (next !== confirm) {
-      error.textContent = 'As senhas nao conferem.';
-      error.hidden = false;
-      return;
-    }
-
-    const ok = await changePasswordApi(role, current, next, getEmbeddedDirigenteAuthHeaders());
-    if (!ok) {
-      error.textContent = 'Nao foi possivel alterar a senha.';
-      error.hidden = false;
-      return;
-    }
-    close();
-    setFeedback(root, 'Senha atualizada.', true);
-  });
 }
 
 function bindDropzone(
@@ -450,15 +384,6 @@ function bindDangerZone(root: HTMLElement): void {
   });
 }
 
-function bindPasswordButtons(root: HTMLElement): void {
-  root
-    .querySelector('#dir-trocar-senha-coord')
-    ?.addEventListener('click', () => openPasswordModal(root, 'coordenador'));
-  root
-    .querySelector('#dir-trocar-senha-dir')
-    ?.addEventListener('click', () => openPasswordModal(root, 'dirigente'));
-}
-
 function mountPanel(root: HTMLElement): void {
   renderEquipesForEtapa(root, 1);
   renderEquipesForEtapa(root, 2);
@@ -472,7 +397,8 @@ function mountPanel(root: HTMLElement): void {
   bindLogo(root);
   bindLockActions(root);
   bindDangerZone(root);
-  bindPasswordButtons(root);
+  const senhasHost = root.querySelector<HTMLElement>('#dir-senhas-host');
+  if (senhasHost) void mountSecSenhas(senhasHost);
 }
 
 function refreshPanel(root: HTMLElement): void {
@@ -502,7 +428,7 @@ function mountAuth(root: HTMLElement): void {
           description: 'Digite a senha do Dirigente para acessar configuracoes administrativas.',
           loginFn: async (password) => {
             const ok = await loginEmbeddedDirigente(password);
-            return ok ? { ok: true } : { ok: false, message: 'Senha incorreta.' };
+            return ok ? { ok: true } : { ok: false, message: 'Credenciais invalidas.' };
           },
           onSuccess: () => {
             renderAuthState();
