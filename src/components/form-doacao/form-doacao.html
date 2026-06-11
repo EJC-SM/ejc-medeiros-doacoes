@@ -1,0 +1,57 @@
+<section class="card" aria-labelledby="titulo-form-doacao">
+  <h2 id="titulo-form-doacao">Registrar minha doacao</h2>
+
+  <div id="form-locked-msg" class="info-box" role="status" aria-live="polite" hidden></div>
+
+  <form id="form-doacao" novalidate aria-describedby="form-feedback">
+    <label for="nome">Nome completo</label>
+    <input id="nome" name="nome" type="text" maxlength="80" required autocomplete="name" />
+
+    <label for="telefone">Telefone / WhatsApp</label>
+    <input id="telefone" name="telefone" type="tel" inputmode="numeric" maxlength="16" autocomplete="tel" />
+
+    <label for="equipe">Equipe</label>
+    <select id="equipe" name="equipe" required>
+      <option value="">Selecione...</option>
+    </select>
+
+    <fieldset id="itens-fieldset">
+      <legend>Itens que vou doar</legend>
+      <div id="itens-lista" role="group" aria-label="Lista de itens para doação"></div>
+    </fieldset>
+
+    <input type="hidden" id="csrf" name="csrf" />
+
+    <button id="btn-submit" type="submit">Confirmar doacao</button>
+    <p id="form-feedback" role="status" aria-live="polite"></p>
+  </form>
+</section>
+
+<section id="verse-card" class="card card-verse" aria-labelledby="titulo-versiculo">
+  <h2 id="titulo-versiculo" class="sr-only">Versiculo</h2>
+  <p id="versiculo-texto" class="verse-text"></p>
+  <p id="versiculo-ref" class="verse-ref"></p>
+</section>
+
+<section class="card" aria-labelledby="titulo-pix">
+  <h2 id="titulo-pix">Contribuir com Pix</h2>
+  <p class="muted">Aponte a camera do celular para o QR Code ou copie a chave abaixo.</p>
+  <div class="pix-wrap">
+    <img id="pix-qr" class="pix-qr" src="" alt="QR Code Pix EJC Medeiros" hidden />
+    <p id="pix-qr-placeholder" class="pix-placeholder">QR Code sera exibido apos configuracao pelo Dirigente.</p>
+  </div>
+  <p class="pix-label">Chave Pix</p>
+  <p id="pix-chave-display" class="pix-chave"></p>
+  <button id="btn-copiar-pix" type="button">Copiar chave Pix</button>
+  <p id="pix-copiado" class="feedback-ok" role="status" aria-live="polite" hidden>Chave copiada!</p>
+</section>
+
+<section class="card" aria-labelledby="titulo-totais-publicos">
+  <h2 id="titulo-totais-publicos">Total arrecadado nesta etapa</h2>
+  <div id="public-totais" class="public-totais" aria-live="polite"></div>
+</section>
+
+<section id="recado-publico-card" class="card card-recado" aria-labelledby="titulo-recado-publico" hidden>
+  <h2 id="titulo-recado-publico">Recado do Casal Compras</h2>
+  <p id="recado-publico-texto"></p>
+</section>

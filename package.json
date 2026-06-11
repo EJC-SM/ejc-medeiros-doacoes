@@ -1,0 +1,24 @@
+{
+  "name": "ejc-medeiros-doacoes",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "npm run typecheck && biome check .",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "husky": "^9.1.7",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.5"
+  },
+  "dependencies": {
+    "web-vitals": "^4.2.4"
+  }
+}

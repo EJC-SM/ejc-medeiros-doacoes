@@ -1,0 +1,108 @@
+<div class="dir-embedded-root" data-dir-refresh>
+  <div id="dir-login-host"></div>
+
+  <div id="dir-panel-host" hidden>
+    <div id="dir-toolbar-host"></div>
+
+    <details class="dir-accordion" open>
+      <summary>Acesso e etapas</summary>
+      <div class="dir-accordion-body">
+        <div class="dir-actions">
+          <button id="dir-trava-1" type="button">Travar 1a Etapa</button>
+          <button id="dir-trava-2" type="button">Travar 2a Etapa</button>
+          <button id="dir-destravar" type="button">Destravar etapas</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="dir-accordion" id="dir-accordion-senhas" open>
+      <summary>Senhas e seguranca</summary>
+      <div class="dir-accordion-body">
+        <div id="dir-senhas-host"></div>
+      </div>
+    </details>
+
+    <details class="dir-accordion">
+      <summary>Identidade visual</summary>
+      <div class="dir-accordion-body">
+        <h4 class="dir-subtitle">Logo do aplicativo</h4>
+        <div id="dir-logo-dropzone" class="dir-dropzone" tabindex="0" role="button" aria-label="Enviar logo">
+          <div id="dir-logo-drop-label" class="dir-drop-label">
+            <span class="dir-drop-icon">Logo</span>
+            <span>Toque para escolher ou arraste o logo (JPG, PNG)</span>
+          </div>
+          <img id="dir-logo-preview" class="dir-preview" src="" alt="Preview logo" hidden />
+        </div>
+        <input id="dir-logo-file" type="file" accept="image/*" hidden />
+        <div class="dir-actions">
+          <button id="dir-salvar-logo" type="button">Salvar logo</button>
+          <button id="dir-restaurar-logo" type="button">Restaurar logo padrao</button>
+        </div>
+
+        <h4 class="dir-subtitle">Branding do evento</h4>
+        <label for="dir-nome-evento">Nome do evento</label>
+        <input id="dir-nome-evento" type="text" maxlength="80" />
+        <label for="dir-versiculo">Versiculo</label>
+        <textarea id="dir-versiculo" rows="3" maxlength="400"></textarea>
+        <label for="dir-versiculo-ref">Referencia biblica</label>
+        <input id="dir-versiculo-ref" type="text" maxlength="80" />
+        <button id="dir-salvar-branding" type="button">Salvar branding</button>
+      </div>
+    </details>
+
+    <details class="dir-accordion">
+      <summary>Pix</summary>
+      <div class="dir-accordion-body">
+        <label for="dir-pix-chave">Chave Pix</label>
+        <input id="dir-pix-chave" type="text" maxlength="120" />
+        <div id="dir-pix-dropzone" class="dir-dropzone" tabindex="0" role="button" aria-label="Enviar QR Code Pix">
+          <div id="dir-pix-drop-label" class="dir-drop-label">
+            <span class="dir-drop-icon">QR</span>
+            <span>Toque para escolher ou arraste a imagem do QR Code</span>
+          </div>
+          <img id="dir-pix-preview" class="dir-preview" src="" alt="Preview QR Code Pix" hidden />
+        </div>
+        <input id="dir-pix-file" type="file" accept="image/*" hidden />
+        <button id="dir-salvar-pix" type="button">Salvar configuracoes Pix</button>
+      </div>
+    </details>
+
+    <details class="dir-accordion">
+      <summary>Equipes</summary>
+      <div class="dir-accordion-body">
+        <details class="dir-sub-accordion">
+          <summary>1a Etapa</summary>
+          <div class="dir-accordion-body">
+            <div id="dir-equipes-1" class="dir-list"></div>
+            <form id="dir-equipe-form-1" class="dir-inline-form" novalidate>
+              <label class="sr-only" for="dir-equipe-nome-1">Nome da equipe</label>
+              <input id="dir-equipe-nome-1" type="text" placeholder="Nome da equipe" maxlength="40" required />
+              <button type="submit">Adicionar</button>
+            </form>
+          </div>
+        </details>
+        <details class="dir-sub-accordion">
+          <summary>2a Etapa</summary>
+          <div class="dir-accordion-body">
+            <div id="dir-equipes-2" class="dir-list"></div>
+            <form id="dir-equipe-form-2" class="dir-inline-form" novalidate>
+              <label class="sr-only" for="dir-equipe-nome-2">Nome da equipe</label>
+              <input id="dir-equipe-nome-2" type="text" placeholder="Nome da equipe" maxlength="40" required />
+              <button type="submit">Adicionar</button>
+            </form>
+          </div>
+        </details>
+      </div>
+    </details>
+
+    <details class="dir-accordion dir-danger-zone">
+      <summary>Zona de perigo</summary>
+      <div class="dir-accordion-body">
+        <button id="dir-reset-doacoes" type="button">Resetar doacoes da etapa atual</button>
+        <button id="dir-reset-itens" type="button">Restaurar itens padrao do banco</button>
+      </div>
+    </details>
+
+    <p id="dir-feedback" role="status" aria-live="polite"></p>
+  </div>
+</div>

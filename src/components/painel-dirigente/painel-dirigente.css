@@ -1,0 +1,265 @@
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 1rem;
+  margin: 1rem 0;
+}
+
+.dir-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 900px) {
+  .dir-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.dir-list {
+  display: grid;
+  gap: 0.45rem;
+  margin-bottom: 0.7rem;
+}
+
+.dir-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.86rem;
+  background: #f8fafc;
+}
+
+.dir-inline-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.45rem;
+}
+
+.dir-dropzone {
+  border: 2px dashed var(--line);
+  border-radius: 10px;
+  padding: 1rem;
+  text-align: center;
+  cursor: pointer;
+  margin: 0.5rem 0;
+  background: #f8fafc;
+}
+
+.dir-dropzone.is-dragover {
+  border-color: var(--brand);
+  background: #fef3dc;
+}
+
+.dir-drop-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.dir-drop-icon {
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.dir-embedded-root .dir-accordion:first-of-type {
+  margin-top: 0;
+}
+
+.dir-accordion {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  margin: 0.75rem 0;
+  background: var(--surface);
+}
+
+.dir-accordion > summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 0.75rem 1rem;
+  list-style: none;
+}
+
+.dir-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dir-accordion-body {
+  padding: 0 1rem 1rem;
+}
+
+.dir-sub-accordion {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+.dir-sub-accordion > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+}
+
+.dir-subtitle {
+  margin: 0.75rem 0 0.35rem;
+  font-size: 0.95rem;
+}
+
+.dir-password-intro {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0 0 0.75rem;
+}
+
+.dir-password-form {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  background: #f8fafc;
+}
+
+.dir-password-form h4 {
+  margin: 0 0 0.35rem;
+}
+
+.dir-password-meta {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
+.dir-password-form input[type="password"] {
+  width: 100%;
+  margin-bottom: 0.35rem;
+}
+
+.dir-embedded-root .dir-section:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.dir-inline-form input,
+.dir-inline-form button,
+textarea,
+.dir-actions button,
+.dir-item button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.5rem 0.6rem;
+  font: inherit;
+}
+
+.dir-inline-form button,
+.dir-actions button {
+  background: var(--brand);
+  color: #ffffff;
+  border-color: var(--brand);
+  cursor: pointer;
+}
+
+.dir-item button {
+  background: #fef2f2;
+  color: var(--danger);
+  border-color: #fecaca;
+  cursor: pointer;
+}
+
+.dir-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.45rem;
+}
+
+.dir-section {
+  margin-top: 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--line);
+}
+
+.dir-section label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin: 0.45rem 0 0.2rem;
+}
+
+.dir-section input[type="text"],
+.dir-section input[type="file"],
+.dir-section textarea {
+  width: 100%;
+}
+
+.dir-preview {
+  display: block;
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  margin: 0.5rem 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.dir-danger-zone button {
+  background: #fef2f2;
+  color: var(--danger);
+  border-color: #fecaca;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.modal-card {
+  width: min(100%, 420px);
+  background: #ffffff;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  padding: 1rem;
+}
+
+.modal-card input {
+  width: 100%;
+  margin-bottom: 0.45rem;
+}
+
+#dir-feedback {
+  min-height: 1.2rem;
+  margin-top: 0.7rem;
+  font-size: 0.9rem;
+}
+
+.dir-ok {
+  color: #166534;
+}
+
+.dir-err {
+  color: var(--danger);
+}
+
+textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 96px;
+}
+
+@media (max-width: 780px) {
+  .dir-inline-form {
+    grid-template-columns: 1fr;
+  }
+}

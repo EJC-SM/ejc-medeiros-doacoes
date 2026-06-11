@@ -1805,53 +1805,74 @@ function loadScript(src, cb) {
   document.head.appendChild(s);
 }
 
+function fetchRuntimeConfig(cb) {
+  var done = false;
+  function finish(cfg) {
+    if (done) return;
+    done = true;
+    cb(cfg || null);
+  }
+
+  try {
+    fetch('/api/runtime-config', { cache: 'no-store' })
+      .then(function(resp) {
+        if (!resp || !resp.ok) throw new Error('runtime-config unavailable');
+        return resp.json();
+      })
+      .then(function(data) { finish(data); })
+      .catch(function() { finish(null); });
+  } catch (e) {
+    finish(null);
+  }
+
+  setTimeout(function() { finish(null); }, 2500);
+}
+
 window.onload = function() {
   init(); // start app with localStorage data immediately
 
-  // Then load Firebase in background
-  // Try multiple CDNs in order
-  var appCDNs = [
-    'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
-    'https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js',
-    'https://unpkg.com/firebase@10.12.0/firebase-app-compat.js'
-  ];
-  var dbCDNs = [
-    'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
-    'https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-database-compat.min.js',
-    'https://unpkg.com/firebase@10.12.0/firebase-database-compat.js'
-  ];
+  fetchRuntimeConfig(function(runtimeCfg) {
+    if (!runtimeCfg || !runtimeCfg.firebase) {
+      console.warn('Runtime config not available. Firebase sync disabled.');
+      return;
+    }
 
-  function tryLoad(urls, cb) {
-    if (!urls.length) { cb(false); return; }
-    var s = document.createElement('script');
-    s.src = urls[0];
-    s.onload = function() { cb(true); };
-    s.onerror = function() { document.head.removeChild(s); tryLoad(urls.slice(1), cb); };
-    document.head.appendChild(s);
-  }
+    // Then load Firebase in background
+    // Try multiple CDNs in order
+    var appCDNs = [
+      'https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
+      'https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.min.js',
+      'https://unpkg.com/firebase@10.12.0/firebase-app-compat.js'
+    ];
+    var dbCDNs = [
+      'https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js',
+      'https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-database-compat.min.js',
+      'https://unpkg.com/firebase@10.12.0/firebase-database-compat.js'
+    ];
 
-  tryLoad(appCDNs, function(ok1) {
-    if (!ok1) { console.warn('Firebase app SDK failed to load from all CDNs'); return; }
-    tryLoad(dbCDNs, function(ok2) {
-      try {
-        var firebaseConfig = {
-          apiKey: "AIzaSyDDJ85sHIZa47cPAaQRyaot00WHSsTdDPs",
-          authDomain: "ejc-medeiros-doacoes.firebaseapp.com",
-          databaseURL: "https://ejc-medeiros-doacoes-default-rtdb.firebaseio.com",
-          projectId: "ejc-medeiros-doacoes",
-          storageBucket: "ejc-medeiros-doacoes.firebasestorage.app",
-          messagingSenderId: "56378412905",
-          appId: "1:56378412905:web:011f0e6cb7908ee56337f8"
-        };
-        firebase.initializeApp(firebaseConfig);
-        window._db = firebase.database();
-        flushFbQueue();
-        initFirebase();
-      } catch(e) {
-        console.warn('Firebase init error:', e);
-      }
-    });  // tryLoad dbCDNs
-  });  // tryLoad appCDNs
+    function tryLoad(urls, cb) {
+      if (!urls.length) { cb(false); return; }
+      var s = document.createElement('script');
+      s.src = urls[0];
+      s.onload = function() { cb(true); };
+      s.onerror = function() { document.head.removeChild(s); tryLoad(urls.slice(1), cb); };
+      document.head.appendChild(s);
+    }
+
+    tryLoad(appCDNs, function(ok1) {
+      if (!ok1) { console.warn('Firebase app SDK failed to load from all CDNs'); return; }
+      tryLoad(dbCDNs, function(ok2) {
+        try {
+          firebase.initializeApp(runtimeCfg.firebase);
+          window._db = firebase.database();
+          flushFbQueue();
+          initFirebase();
+        } catch(e) {
+          console.warn('Firebase init error:', e);
+        }
+      });  // tryLoad dbCDNs
+    });  // tryLoad appCDNs
+  });
 };
 </script>
 </body>
