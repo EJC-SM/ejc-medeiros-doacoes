@@ -75,13 +75,8 @@ Abra `http://localhost:5173`.
 
 Produção recomendada: **Vercel** + **Firebase Realtime Database**.
 
-Passo a passo completo: [DEPLOYMENT.md](.planning/DEPLOYMENT.md).
-
----
-
-## Legado
-
-O arquivo `ejc-doacoes.html` é a versão monolítica anterior (~1861 linhas), mantida como referência. O deploy atual usa `index.html` + `src/` via `vercel.json`.
+Passo a passo completo: [DEPLOYMENT.md](.planning/DEPLOYMENT.md).  
+Rotação de chaves e proteção do código-fonte: [SECURITY-ROTATION.md](.planning/SECURITY-ROTATION.md).
 
 ---
 
