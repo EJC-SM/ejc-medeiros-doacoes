@@ -209,6 +209,39 @@ Husky executa `npm run check` em cada commit.
 
 ---
 
+## 10b. Testes automatizados
+
+```bash
+npm run test        # unitários (Vitest)
+npm run test:watch  # unitários em watch
+npm run test:e2e    # E2E (Playwright)
+npm run test:all    # check + unitários + E2E
+```
+
+### Estrutura
+
+```
+tests/
+  unit/                 # Vitest + jsdom (vitest.config.ts)
+    setup.ts            # shim de WebCrypto para jsdom
+    validation.test.ts  # regras de campo (nome, equipe, telefone, quantidade)
+    security.test.ts    # sanitização, formatPhoneBr, CSRF client
+    export.test.ts      # CSV: cabeçalho, anti-formula-injection, backup
+    store.test.ts       # etapa pública, totais, meta restante, filtro de itens
+  e2e/                  # Playwright (playwright.config.ts)
+    _mock-api.ts        # intercepta /api/* — determinístico, sem Firebase
+    doacao.spec.ts      # fluxo público de doação + validação de campos
+    navegacao.spec.ts   # abas Equipistas/Coordenador + gate de login
+```
+
+### Convenções
+
+- **Unitários:** alvo são funções puras / com `localStorage`/`sessionStorage`. Para utilitários que dependem de DOM (ex.: `export.ts` gera `Blob`), os testes interceptam `URL.createObjectURL`/`Blob`.
+- **E2E:** todas as rotas `/api/*` são mockadas via `page.route` (`tests/e2e/_mock-api.ts`), então os testes não tocam o Firebase. O Playwright sobe o próprio `vite` na porta 4318 (ver `playwright.config.ts`).
+- Pré-requisito do E2E na primeira execução: `npx playwright install chromium`.
+
+---
+
 ## 11. Extensões comuns
 
 ### Adicionar campo na doação

@@ -25,6 +25,10 @@ Abra `http://localhost:5173`.
 | `npm run lint` | Lint com Biome |
 | `npm run format` | Formatação com Biome |
 | `npm run check` | Typecheck + Biome (usado no pre-commit) |
+| `npm run test` | Testes unitários (Vitest) |
+| `npm run test:watch` | Testes unitários em modo watch |
+| `npm run test:e2e` | Testes E2E (Playwright) |
+| `npm run test:all` | `check` + unitários + E2E |
 
 ---
 
@@ -49,6 +53,9 @@ Abra `http://localhost:5173`.
 │   ├── state/           # store, api client, firebase gateway
 │   ├── utils/           # validação, auth, export, a11y
 │   └── styles/          # tokens, global, a11y
+├── tests/
+│   ├── unit/            # Vitest (jsdom) — validação, security, export, store
+│   └── e2e/             # Playwright — fluxos públicos com /api/* mockado
 ├── database.rules.json  # Regras Firebase (publicar no console)
 ├── index.html           # Entry HTML + SEO
 └── .planning/           # Documentação técnica
