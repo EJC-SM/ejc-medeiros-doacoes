@@ -11,18 +11,19 @@ export function digitsOnly(value: string): string {
   return value.replace(/\D+/g, '');
 }
 
+function joinPhoneParts(ddd: string, prefix: string, suffix: string): string {
+  let out = ddd ? `(${ddd})` : '';
+  if (prefix) out += `${out ? ' ' : ''}${prefix}`;
+  if (suffix) out += `-${suffix}`;
+  return out;
+}
+
 export function formatPhoneBr(value: string): string {
   const d = digitsOnly(value).slice(0, 11);
   if (d.length <= 10) {
-    const p1 = d.slice(0, 2);
-    const p2 = d.slice(2, 6);
-    const p3 = d.slice(6, 10);
-    return [p1 && `(${p1})`, p2, p3 && `-${p3}`].filter(Boolean).join(' ');
+    return joinPhoneParts(d.slice(0, 2), d.slice(2, 6), d.slice(6, 10));
   }
-  const p1 = d.slice(0, 2);
-  const p2 = d.slice(2, 7);
-  const p3 = d.slice(7, 11);
-  return [p1 && `(${p1})`, p2, p3 && `-${p3}`].filter(Boolean).join(' ');
+  return joinPhoneParts(d.slice(0, 2), d.slice(2, 7), d.slice(7, 11));
 }
 
 export function getOrCreateClientCsrfToken(): string {

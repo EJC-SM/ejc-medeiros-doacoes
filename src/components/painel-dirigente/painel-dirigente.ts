@@ -487,7 +487,6 @@ function mountAuth(root: HTMLElement): void {
           },
           onSuccess: () => {
             renderAuthState();
-            mountPanel(root);
           },
         }),
       );

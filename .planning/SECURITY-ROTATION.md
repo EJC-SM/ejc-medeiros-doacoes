@@ -52,10 +52,10 @@ Após trocar `ADMIN_API_TOKEN` / `SESSION_SECRET`, todas as sessões admin (`x-a
 
 ### 1.4 Proteções adicionais na Vercel
 
-- [ ] Confirmar que **Environment Variables** não estão expostas em logs de build públicos.
-- [ ] Restringir acesso ao projeto Vercel (membros mínimos necessários).
-- [ ] Ativar **Deployment Protection** em Preview, se branches forem compartilhadas.
-- [ ] Verificar que nenhuma variável `VITE_*` com segredo está definida (segredos não devem ir para o bundle).
+- [ok] Confirmar que **Environment Variables** não estão expostas em logs de build públicos.
+- [ok] Restringir acesso ao projeto Vercel (membros mínimos necessários).
+- [ok] Ativar **Deployment Protection** em Preview, se branches forem compartilhadas.
+- [ok] Verificar que nenhuma variável `VITE_*` com segredo está definida (segredos não devem ir para o bundle).
 
 ---
 
@@ -103,15 +103,15 @@ firebase deploy --only database
 
 Verificar no Firebase Console → Realtime Database:
 
-- [ ] Remover `config/senha_coord` e `config/senha_dir` se ainda existirem (texto plano do legado).
-- [ ] Confirmar nó `auth/` com hashes PBKDF2 e `auth/meta/initialSetupComplete === true`.
-- [ ] Se senhas padrão (`ejcdoacoes2025` / `Senh@ejc123!*`) nunca foram trocadas, **alterar imediatamente** pelo painel Dirigente → Senhas e segurança.
+- [ok] Remover `config/senha_coord` e `config/senha_dir` se ainda existirem (texto plano do legado).
+- [ok] Confirmar nó `auth/` com hashes PBKDF2 e `auth/meta/initialSetupComplete === true`.
+- [ok] Se senhas padrão (`ejcdoacoes2025` / `Senh@ejc123!*`) nunca foram trocadas, **alterar imediatamente** pelo painel Dirigente → Senhas e segurança.
 
 ### 2.5 Auditoria e monitoramento
 
-- [ ] Revisar **Authentication → Usage** e logs de acesso ao Realtime Database.
-- [ ] Verificar se houve escrita não autorizada durante o período em que regras estavam fracas ou ausentes.
-- [ ] Considerar backup/export do estado atual antes de limpezas em massa.
+- [ok] Revisar **Authentication → Usage** e logs de acesso ao Realtime Database.
+- [ok] Verificar se houve escrita não autorizada durante o período em que regras estavam fracas ou ausentes.
+- [ok] Considerar backup/export do estado atual antes de limpezas em massa.
 
 ---
 
@@ -151,20 +151,20 @@ git push origin main --force
 
 Em **Settings → General → Danger Zone** e **Settings → Code security**:
 
-- [ ] Confirmar repositório como **Private** (ou manter private).
+- [ok] Confirmar repositório como **Private** (ou manter private).
 - [ ] Ativar **Secret scanning** e **Push protection** (GitHub Advanced Security, se disponível).
-- [ ] Ativar **Dependabot alerts** para vulnerabilidades em dependências.
+- [ok] Ativar **Dependabot alerts** para vulnerabilidades em dependências.
 - [ ] Configurar **branch protection** em `main`:
   - Require pull request reviews
   - Block force pushes (exceto durante purga única do histórico)
-- [ ] Revisar colaboradores e permissões (princípio do menor privilégio).
+- [ok] Revisar colaboradores e permissões (princípio do menor privilégio).
 
 ### 3.4 Boas práticas contínuas
 
-- [ ] Manter `.env` no `.gitignore` (já configurado).
-- [ ] Nunca commitar `.env`, secrets ou credenciais em docs/issues.
-- [ ] Usar apenas `.env.example` com placeholders vazios.
-- [ ] Executar busca antes de push:
+- [ok] Manter `.env` no `.gitignore` (já configurado).
+- [ok] Nunca commitar `.env`, secrets ou credenciais em docs/issues.
+- [ok] Usar apenas `.env.example` com placeholders vazios.
+- [ok] Executar busca antes de push:
 
 ```bash
 git diff --staged | grep -iE 'AIza|SECRET|TOKEN|PASSWORD|api[_-]?key' || true
