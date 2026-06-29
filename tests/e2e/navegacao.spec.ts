@@ -1,20 +1,29 @@
 import { expect, test } from '@playwright/test';
 import { mockApi } from './_mock-api';
 
-test('navegacao entre abas Equipistas e Coordenador exibe o gate de login', async ({ page }) => {
+test('rota publica nao expoe acesso ao Coordenador', async ({ page }) => {
   await mockApi(page);
 
   await page.goto('/');
   await page.waitForLoadState('networkidle');
 
-  // Aba publica ativa por padrao.
+  // Formulario publico ativo.
   await expect(page.getByRole('heading', { name: 'Registrar minha doacao' })).toBeVisible();
 
-  // Ir para a area do Coordenador — deve aparecer o gate de login.
-  await page.getByRole('tab', { name: /Coordenador/ }).click();
+  // Nao deve existir aba/menu de Coordenador na rota publica.
+  await expect(page.getByRole('tab', { name: /Coordenador/ })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Acesso do Coordenador' })).toHaveCount(0);
+});
+
+test('rota /admin exibe o gate de login do Coordenador', async ({ page }) => {
+  await mockApi(page);
+
+  await page.goto('/admin');
+  await page.waitForLoadState('networkidle');
+
+  // Gate de login do Coordenador.
   await expect(page.getByRole('heading', { name: 'Acesso do Coordenador' })).toBeVisible();
 
-  // Voltar para a aba publica.
-  await page.getByRole('tab', { name: /Equipistas/ }).click();
-  await expect(page.getByRole('heading', { name: 'Registrar minha doacao' })).toBeVisible();
+  // O formulario publico nao deve aparecer na rota admin.
+  await expect(page.getByRole('heading', { name: 'Registrar minha doacao' })).toHaveCount(0);
 });
